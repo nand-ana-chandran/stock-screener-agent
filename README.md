@@ -72,8 +72,19 @@ Run it:
 $env:CASES_MODULE = "eval_cases"      # or "eval_holdout"
 uv run --env-file .env eval.py 3      # 3 repeats
 uv run --env-file .env eval.py 1 snapshot_nvda  # one case
-uv run test_grounding.py              # offline tests, no API calls
 ```
+
+### Run offline regression tests
+
+These tests do not call the Gemini API:
+
+```powershell
+uv run python test_custom_screener.py
+uv run python test_sort_order.py
+uv run python test_grounding.py
+```
+
+They cover custom screening filters, market-cap boundaries, positive-gainer filtering, sorting, pagination and result counts, plus number-grounding checks. Run them after changing the screener tools or evaluation logic.
 
 ### Results
 
@@ -110,15 +121,19 @@ Writing these down because they are the useful part.
 ## Project structure
 
 ```text
-flow.py            LangGraph agent, system prompt, tool-call guard
-tool.py            the three tools and number formatting
-app.py             Streamlit front end
-eval.py            evaluation harness
-eval_cases.py      dev test cases
-eval_holdout.py    held-out test cases
-grounding.py       number grounding checker
-regrade.py         re-grade saved results offline
-test_grounding.py  offline tests for the checker
+flow.py                 LangGraph agent, system prompt, tool-call guard
+tool.py                 Stock-screening tools and number formatting
+app.py                  Streamlit chat interface
+eval.py                 Evaluation harness
+eval_cases.py           Development evaluation cases
+eval_holdout.py         Held-out evaluation cases
+grounding.py            Number-grounding checker
+regrade.py              Re-grade saved results offline
+test_custom_screener.py Stock filtering, sorting and pagination tests
+test_sort_order.py      Predefined screener sorting tests
+test_grounding.py       Number-grounding regression tests
+pyproject.toml          Project dependencies and configuration
+uv.lock                 Locked dependency versions
 ```
 
 ## Disclaimer
