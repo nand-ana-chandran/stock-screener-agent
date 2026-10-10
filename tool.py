@@ -107,6 +107,7 @@ def custom_screener(
     ascending: bool = False,
     min_volume: int = 0,
     offset: int = 0,
+    min_percent_change: float | None = None,
 ) -> str:
     """
     Screens US-listed stocks (NYSE/Nasdaq/AMEX) with custom filters and a real sort order.
@@ -126,6 +127,8 @@ def custom_screener(
         min_volume: minimum shares traded today. Use 500000 when ranking by percent
             change, so illiquid stocks do not dominate the list. 0 means no minimum.
         offset: pagination start point. 0 for the first five results, 5 for the next five, etc.
+        min_percent_change: optional minimum daily percentage change in percentage points.
+            Pass 0 to return gainers only (strictly greater than 0%); omit for no change filter.
 
     Returns:
         A JSON list of five stocks, in sorted order. Market caps are pre-formatted.
@@ -145,6 +148,8 @@ def custom_screener(
         filters.append(EquityQuery("eq", ["sector", sector]))
     if min_volume > 0:
         filters.append(EquityQuery("gt", ["dayvolume", min_volume]))
+    if min_percent_change is not None:
+        filters.append(EquityQuery("gt", ["percentchange", min_percent_change]))
 
     try:
         query = EquityQuery("and", filters)
@@ -166,7 +171,35 @@ def custom_screener(
         "regularMarketChangePercent", "marketCap", "regularMarketVolume",
         "trailingPE", "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "averageAnalystRating",
     ]
-    rows = [{k: q.get(k) for k in fields} for q in result.get("quotes", [])]
+    raw_quotes = result.get("quotes", [])
+
+    # Enforce the gainers threshold locally as well as in Yahoo's query. This prevents
+    # negative movers from slipping into a gainers-only result if upstream filtering varies.
+    if min_percent_change is not None:
+        raw_quotes = [
+            q for q in raw_quotes
+            if isinstance(q.get("regularMarketChangePercent"), (int, float))
+            and q["regularMarketChangePercent"] > min_percent_change
+        ]
+
+    # Enforce the requested ranking locally too, rather than trusting the upstream order.
+    local_sort_fields = {
+        "market_cap": "marketCap",
+        "percent_change": "regularMarketChangePercent",
+        "price": "regularMarketPrice",
+        "volume": "regularMarketVolume",
+        "pe_ratio": "trailingPE",
+    }
+    sort_field = local_sort_fields[sort_by]
+
+    def sort_value(quote):
+        value = quote.get(sort_field)
+        if isinstance(value, (int, float)):
+            return value
+        return float("inf") if ascending else float("-inf")
+
+    raw_quotes = sorted(raw_quotes, key=sort_value, reverse=not ascending)
+    rows = [{k: q.get(k) for k in fields} for q in raw_quotes]
     if not rows:
         return "No stocks matched those filters."
     for row in rows:
@@ -208,13 +241,23 @@ def company_snapshot(symbol: str) -> str:
     name = info.get("longName") or info.get("shortName")
     quote_cur = info.get("currency")
     fin_cur = info.get("financialCurrency")
+    current_price = info.get("regularMarketPrice") or info.get("currentPrice")
+    previous_close = info.get("regularMarketPreviousClose")
+    daily_change_percent = (
+        ((current_price / previous_close) - 1) * 100
+        if isinstance(current_price, (int, float))
+        and isinstance(previous_close, (int, float))
+        and previous_close > 0
+        else None
+    )
     data = {
         "symbol": symbol,
         "name": name,
         "sector": info.get("sector"),
         "industry": info.get("industry"),
         "business_summary": summary[:400] + ("..." if len(summary) > 400 else ""),
-        "price": fmt_num(info.get("currentPrice") or info.get("regularMarketPrice")),
+        "price": fmt_num(current_price),
+        "daily_change_percent": fmt_pct(daily_change_percent / 100) if daily_change_percent is not None else None,
         "quote_currency": quote_cur,
         "market_cap": fmt_money(info.get("marketCap"), quote_cur),
         "trailing_pe": fmt_num(info.get("trailingPE")),
