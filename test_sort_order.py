@@ -18,7 +18,7 @@ assert screen.call_args.args[0] is not None
 assert screen.call_args.kwargs == {
     "sortField": "dayvolume",
     "sortAsc": False,
-    "size": 5,
+    "size": 25,
     "offset": 0,
 }
 print("Most-actives requests descending dayvolume sorting.")

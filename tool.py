@@ -64,7 +64,7 @@ def simple_screener(screen_type: str, offset: int = 0) -> str:
             query,
             sortField=preset.get("sortField"),
             sortAsc=str(preset.get("sortType", "DESC")).upper() == "ASC",
-            size=5,
+            size=25,
             offset=offset,
         )
     except Exception as e:
@@ -96,6 +96,7 @@ SORT_FIELDS = {
     "volume": "dayvolume",
     "pe_ratio": "peratio.lasttwelvemonths",
 }
+SCREENER_PAGE_SIZE = 250
 
 
 @tool
@@ -108,6 +109,7 @@ def custom_screener(
     min_volume: int = 0,
     offset: int = 0,
     min_percent_change: float | None = None,
+    limit: int = 5,
 ) -> str:
     """
     Screens US-listed stocks (NYSE/Nasdaq/AMEX) with custom filters and a real sort order.
@@ -125,16 +127,22 @@ def custom_screener(
         sort_by: one of 'market_cap', 'percent_change', 'price', 'volume', 'pe_ratio'.
         ascending: False sorts highest first (default), True sorts lowest first.
         min_volume: minimum shares traded today. Use 500000 when ranking by percent
-            change, so illiquid stocks do not dominate the list. 0 means no minimum.
-        offset: pagination start point. 0 for the first five results, 5 for the next five, etc.
+            change unless the user requests no minimum; 0 means no minimum.
+        offset: pagination start point in the sorted results. 0 for the first page.
         min_percent_change: optional minimum daily percentage change in percentage points.
             Pass 0 to return gainers only (strictly greater than 0%); omit for no change filter.
+        limit: maximum number of matching results to return. Defaults to five; set this
+            to the requested number for requests such as 'top 10'.
 
     Returns:
-        A JSON list of five stocks, in sorted order. Market caps are pre-formatted.
+        A JSON list of up to limit stocks, in sorted order. Market caps are pre-formatted.
     """
     if sort_by not in SORT_FIELDS:
         return f"Unknown sort_by '{sort_by}'. Valid options: {', '.join(SORT_FIELDS)}"
+    if limit < 1:
+        return "limit must be a positive integer."
+    if offset < 0:
+        return "offset must be zero or greater."
 
     filters = [
         EquityQuery("eq", ["region", "us"]),
@@ -153,15 +161,52 @@ def custom_screener(
 
     try:
         query = EquityQuery("and", filters)
-        result = yf.screen(
-            query,
-            sortField=SORT_FIELDS[sort_by],
-            sortAsc=ascending,
-            size=5,
-            offset=offset,
-        )
+        result = None
+        raw_quotes = []
+        seen_symbols = set()
+        api_offset = 0
+        reported_total = None
+        candidate_set_complete = False
+
+        while True:
+            result = yf.screen(
+                query,
+                sortField=SORT_FIELDS[sort_by],
+                sortAsc=ascending,
+                size=SCREENER_PAGE_SIZE,
+                offset=api_offset,
+            )
+            if reported_total is None:
+                reported_total = result.get("total")
+
+            page_quotes = result.get("quotes", [])
+            if not page_quotes:
+                candidate_set_complete = (
+                    reported_total is None or len(raw_quotes) >= reported_total
+                )
+                break
+
+            previous_count = len(raw_quotes)
+            for quote in page_quotes:
+                symbol = quote.get("symbol")
+                if symbol is None or symbol not in seen_symbols:
+                    raw_quotes.append(quote)
+                    if symbol is not None:
+                        seen_symbols.add(symbol)
+
+            if reported_total is not None and len(raw_quotes) >= reported_total:
+                candidate_set_complete = True
+                break
+            if len(raw_quotes) == previous_count:
+                break
+            if reported_total is None and len(page_quotes) < SCREENER_PAGE_SIZE:
+                candidate_set_complete = True
+                break
+            api_offset += len(page_quotes)
     except Exception as e:
         return f"Screener error: {e}"
+
+    retrieved_candidate_count = len(raw_quotes)
 
     with open("output.json", "w") as f:
         json.dump(result, f, indent=2)
@@ -171,10 +216,34 @@ def custom_screener(
         "regularMarketChangePercent", "marketCap", "regularMarketVolume",
         "trailingPE", "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "averageAnalystRating",
     ]
-    raw_quotes = result.get("quotes", [])
 
-    # Enforce the gainers threshold locally as well as in Yahoo's query. This prevents
-    # negative movers from slipping into a gainers-only result if upstream filtering varies.
+    # Yahoo labels warrants as EQUITY, so filter their security names explicitly.
+    raw_quotes = [
+        quote for quote in raw_quotes
+        if not re.search(
+            r"\b(?:warrants?|wts)\b",
+            f"{quote.get('shortName') or ''} {quote.get('longName') or ''}",
+            flags=re.IGNORECASE,
+        )
+    ]
+
+    # Yahoo may return quotes outside the query's market-cap bounds; validate
+    # its raw numeric marketCap values before formatting them for the response.
+    if min_market_cap_millions > 0 or max_market_cap_millions > 0:
+        raw_quotes = [
+            quote for quote in raw_quotes
+            if isinstance(quote.get("marketCap"), (int, float))
+            and (
+                min_market_cap_millions <= 0
+                or quote["marketCap"] > min_market_cap_millions * 1_000_000
+            )
+            and (
+                max_market_cap_millions <= 0
+                or quote["marketCap"] < max_market_cap_millions * 1_000_000
+            )
+        ]
+
+    # Yahoo's screener may return rows that do not satisfy its percentage filter.
     if min_percent_change is not None:
         raw_quotes = [
             q for q in raw_quotes
@@ -199,15 +268,42 @@ def custom_screener(
         return float("inf") if ascending else float("-inf")
 
     raw_quotes = sorted(raw_quotes, key=sort_value, reverse=not ascending)
+    matching_count = len(raw_quotes)
+    raw_quotes = raw_quotes[offset:offset + limit]
+    page_match_count = len(raw_quotes)
     rows = [{k: q.get(k) for k in fields} for q in raw_quotes]
-    if not rows:
-        return "No stocks matched those filters."
     for row in rows:
         row["marketCap"] = fmt_money(row.get("marketCap"))
         for key in ("regularMarketPrice", "regularMarketChangePercent", "trailingPE",
                     "fiftyTwoWeekHigh", "fiftyTwoWeekLow"):
             row[key] = fmt_num(row.get(key))
-    return "Custom screener results (sorted):\n" + json.dumps(rows, indent=2)
+
+    output = (
+        ("No stocks matched those filters." if not rows else
+         "Custom screener results (sorted):\n" + json.dumps(rows, indent=2))
+    )
+    if len(rows) < limit:
+        if candidate_set_complete:
+            note = (
+                f"Only {page_match_count} matching stocks were available for this page "
+                f"({matching_count} matches total) among "
+                f"{retrieved_candidate_count} unique Yahoo Finance screener candidates retrieved."
+            )
+            if reported_total is not None:
+                note += f" Yahoo reported {reported_total} candidates."
+            note += " Yahoo Finance screener coverage may not include every market listing."
+        else:
+            note = (
+                f"Only {page_match_count} matching stocks were available for this page "
+                f"({matching_count} matches total) among "
+                f"{retrieved_candidate_count} unique Yahoo Finance screener candidates retrieved; "
+                f"the candidate set may be incomplete"
+            )
+            if reported_total is not None:
+                note += f" (Yahoo reported {reported_total} candidates)"
+            note += "."
+        output += "\n\n" + note
+    return output
 
 
 # ---------- Tool 3: company snapshot (fundamentals + news) ----------
