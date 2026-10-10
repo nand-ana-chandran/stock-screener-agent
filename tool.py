@@ -207,7 +207,7 @@ def custom_screener(
         for key in ("regularMarketPrice", "regularMarketChangePercent", "trailingPE",
                     "fiftyTwoWeekHigh", "fiftyTwoWeekLow"):
             row[key] = fmt_num(row.get(key))
-    return "Custom screener results (sorted):\\n" + json.dumps(rows, indent=2)
+    return "Custom screener results (sorted):\n" + json.dumps(rows, indent=2)
 
 
 # ---------- Tool 3: company snapshot (fundamentals + news) ----------
