@@ -23,7 +23,7 @@ VALID_TOOLS = {"simple_screener", "custom_screener", "company_snapshot"}
 DEFAULTS = {
     "custom_screener": {
         "min_market_cap_millions": 0, "max_market_cap_millions": 0, "sector": "",
-        "sort_by": "market_cap", "ascending": False, "min_volume": 0, "offset": 0,
+        "sort_by": "market_cap", "ascending": False, "min_volume": None, "offset": 0,
     },
     "simple_screener": {"offset": 0},
 }

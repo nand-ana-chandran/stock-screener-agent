@@ -45,6 +45,137 @@ def test_gainers_only_excludes_negative_and_sorts_descending():
     assert screen.call_args.kwargs["sortAsc"] is False
 
 
+def test_gainers_default_volume_threshold_filters_returned_quotes():
+    quotes = [
+        {
+            "symbol": "LOWVOL",
+            "regularMarketChangePercent": 50,
+            "regularMarketVolume": 364005,
+            "marketCap": 500000000,
+        },
+        {
+            "symbol": "ELIGIBLE",
+            "regularMarketChangePercent": 10,
+            "regularMarketVolume": 500001,
+            "marketCap": 500000000,
+        },
+    ]
+    result, screen = run_in_temp_dir(
+        {
+            "sort_by": "percent_change",
+            "ascending": False,
+            "min_percent_change": 0,
+        },
+        quotes,
+    )
+
+    rows = parse_rows(result)
+    assert [row["symbol"] for row in rows] == ["ELIGIBLE"]
+    assert {
+        "operator": "GT",
+        "operands": ["dayvolume", 500000],
+    } in list(query_nodes(screen.call_args.args[0].to_dict()))
+
+
+def test_gainers_filter_volume_before_selecting_top_ten_across_pages():
+    quotes = [
+        {
+            "symbol": f"LOW{index}",
+            "regularMarketChangePercent": 100 - index / 100,
+            "regularMarketVolume": 400000,
+            "marketCap": 500000000,
+        }
+        for index in range(250)
+    ]
+    quotes.extend([
+        {
+            "symbol": f"ELIGIBLE{index}",
+            "regularMarketChangePercent": 20 - index,
+            "regularMarketVolume": 500001 + index,
+            "marketCap": 500000000,
+        }
+        for index in range(12)
+    ])
+
+    def screen_page(query, **kwargs):
+        start = kwargs["offset"]
+        return {
+            "total": len(quotes),
+            "quotes": quotes[start:start + kwargs["size"]],
+        }
+
+    previous_directory = os.getcwd()
+    with tempfile.TemporaryDirectory() as temp_directory:
+        try:
+            os.chdir(temp_directory)
+            with patch("tool.yf.screen", side_effect=screen_page) as screen:
+                result = custom_screener.invoke({
+                    "sort_by": "percent_change",
+                    "ascending": False,
+                    "min_percent_change": 0,
+                    "limit": 10,
+                })
+        finally:
+            os.chdir(previous_directory)
+
+    rows = parse_rows(result)
+    assert [row["symbol"] for row in rows] == [
+        f"ELIGIBLE{index}" for index in range(10)
+    ]
+    assert len(rows) == 10
+    assert all(row["regularMarketVolume"] > 500000 for row in rows)
+    assert [call.kwargs["offset"] for call in screen.call_args_list] == [0, 250]
+
+
+def test_explicit_volume_threshold_override_and_no_minimum_are_respected():
+    quotes = [
+        {
+            "symbol": "BELOW_DEFAULT",
+            "regularMarketChangePercent": 12,
+            "regularMarketVolume": 700000,
+            "marketCap": 500000000,
+        },
+        {
+            "symbol": "ABOVE_OVERRIDE",
+            "regularMarketChangePercent": 5,
+            "regularMarketVolume": 1200000,
+            "marketCap": 500000000,
+        },
+    ]
+    result, screen = run_in_temp_dir(
+        {
+            "sort_by": "percent_change",
+            "ascending": False,
+            "min_percent_change": 0,
+            "min_volume": 1000000,
+        },
+        quotes,
+    )
+    assert [row["symbol"] for row in parse_rows(result)] == ["ABOVE_OVERRIDE"]
+    assert {
+        "operator": "GT",
+        "operands": ["dayvolume", 1000000],
+    } in list(query_nodes(screen.call_args.args[0].to_dict()))
+
+    result, screen = run_in_temp_dir(
+        {
+            "sort_by": "percent_change",
+            "ascending": False,
+            "min_percent_change": 0,
+            "min_volume": 0,
+        },
+        quotes,
+    )
+    assert [row["symbol"] for row in parse_rows(result)] == [
+        "BELOW_DEFAULT", "ABOVE_OVERRIDE"
+    ]
+    assert all(
+        node["operands"][0] != "dayvolume"
+        for node in query_nodes(screen.call_args.args[0].to_dict())
+        if node.get("operands")
+    )
+
+
 def query_nodes(query):
     if isinstance(query, dict):
         yield query
@@ -187,13 +318,14 @@ def test_insufficient_results_are_reported_without_claiming_market_coverage():
         {
             "symbol": f"NEG{index}",
             "regularMarketChangePercent": -2.0,
+            "regularMarketVolume": 600000,
             "marketCap": 500000000,
         }
         for index in range(250)
     ]
     quotes.extend([
-        {"symbol": "TOP", "regularMarketChangePercent": 8.5, "marketCap": 500000000},
-        {"symbol": "SMALL", "regularMarketChangePercent": 1.2, "marketCap": 500000000},
+        {"symbol": "TOP", "regularMarketChangePercent": 8.5, "regularMarketVolume": 600000, "marketCap": 500000000},
+        {"symbol": "SMALL", "regularMarketChangePercent": 1.2, "regularMarketVolume": 600000, "marketCap": 500000000},
     ])
 
     def screen_page(query, **kwargs):
@@ -229,8 +361,8 @@ def test_incomplete_yahoo_candidate_set_is_reported():
         {
             "total": 300,
             "quotes": [
-                {"symbol": "TOP", "regularMarketChangePercent": 8.5, "marketCap": 500000000},
-                {"symbol": "SMALL", "regularMarketChangePercent": 1.2, "marketCap": 500000000},
+                {"symbol": "TOP", "regularMarketChangePercent": 8.5, "regularMarketVolume": 600000, "marketCap": 500000000},
+                {"symbol": "SMALL", "regularMarketChangePercent": 1.2, "regularMarketVolume": 600000, "marketCap": 500000000},
             ],
         },
         {"total": 300, "quotes": []},
@@ -271,6 +403,9 @@ def test_volume_sort_is_descending_even_if_upstream_rows_are_unsorted():
 
 if __name__ == "__main__":
     test_gainers_only_excludes_negative_and_sorts_descending()
+    test_gainers_default_volume_threshold_filters_returned_quotes()
+    test_gainers_filter_volume_before_selecting_top_ten_across_pages()
+    test_explicit_volume_threshold_override_and_no_minimum_are_respected()
     test_no_volume_threshold_and_technology_sector_filter()
     test_small_cap_bounds_exclude_quotes_over_requested_maximum()
     test_top_ten_fetches_all_pages_then_sorts_and_limits_results()

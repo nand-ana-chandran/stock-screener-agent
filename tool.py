@@ -29,10 +29,11 @@ def fmt_num(x, digits=2):
 
 # ---------- Tool 1: predefined screener ----------
 @tool
-def simple_screener(screen_type: str, offset: int = 0) -> str:
+def simple_screener(screen_type: str, offset: int = 0, limit: int = 25) -> str:
     """
-    Returns a predefined screened list. Results are NOT ranked. Prefer custom_screener when
-    the user wants a ranking, a market cap range, or a sector.
+    Returns a predefined screened list. The 'most_actives' screen is ranked locally by
+    daily trading volume, highest first; other predefined screens are not ranked.
+    Prefer custom_screener when the user wants a market cap range or sector.
     IMPORTANT: some screens return individual STOCKS and some return mutual FUNDS or bond
     funds. Choose by what the user is asking about. If the user asks for stocks or
     companies, never use a FUND screen. Use a FUND screen only when the user asks for
@@ -46,27 +47,89 @@ def simple_screener(screen_type: str, offset: int = 0) -> str:
         screen_type, FUND screens (return mutual funds or index funds, NOT stocks):
             'conservative_foreign_funds', 'high_yield_bond', 'portfolio_anchors',
             'solid_large_growth_funds', 'solid_midcap_growth_funds', 'top_mutual_funds'
-        offset: pagination start point, optional. Use 0 (the default) for the first page,
-            5 for the next five, 10 for the five after that, and so on.
+        offset: pagination start point, optional. For 'most_actives', this is the rank
+            offset after sorting all retrieved candidates.
+        limit: maximum number of results to return; defaults to 25.
 
     Returns:
-        A JSON list. The first line says whether the rows are stocks, funds or ETFs.
+        A JSON list. Most-active rows include their rank and actual daily volume;
+        unavailable volumes are null and are not ranked. The first line identifies stocks,
+        funds or ETFs.
     """
     # ... body unchanged from your current version ...
     if screen_type not in yf.PREDEFINED_SCREENER_QUERIES:
         valid = ", ".join(yf.PREDEFINED_SCREENER_QUERIES.keys())
         return f"Unknown screen_type '{screen_type}'. Valid options: {valid}"
+    if limit < 1 or limit > 250:
+        return "limit must be between 1 and 250."
+    if offset < 0:
+        return "offset must be zero or greater."
 
     preset = yf.PREDEFINED_SCREENER_QUERIES[screen_type]
     query = preset["query"]
+    sort_field = preset.get("sortField")
+    sort_ascending = str(preset.get("sortType", "DESC")).upper() == "ASC"
     try:
-        result = yf.screen(
-            query,
-            sortField=preset.get("sortField"),
-            sortAsc=str(preset.get("sortType", "DESC")).upper() == "ASC",
-            size=25,
-            offset=offset,
-        )
+        if screen_type == "most_actives":
+            quotes = []
+            seen_symbols = set()
+            api_offset = 0
+            reported_total = None
+            candidate_set_complete = False
+            while True:
+                result = yf.screen(
+                    query,
+                    sortField=sort_field,
+                    sortAsc=sort_ascending,
+                    size=SCREENER_PAGE_SIZE,
+                    offset=api_offset,
+                )
+                if reported_total is None:
+                    reported_total = result.get("total")
+                page_quotes = result.get("quotes", [])
+                if not page_quotes:
+                    candidate_set_complete = (
+                        reported_total is None or len(quotes) >= reported_total
+                    )
+                    break
+
+                previous_count = len(quotes)
+                for quote in page_quotes:
+                    symbol = quote.get("symbol")
+                    if symbol is None or symbol not in seen_symbols:
+                        quotes.append(quote)
+                        if symbol is not None:
+                            seen_symbols.add(symbol)
+
+                if reported_total is not None and len(quotes) >= reported_total:
+                    candidate_set_complete = True
+                    break
+                if len(quotes) == previous_count:
+                    break
+                if reported_total is None and len(page_quotes) < SCREENER_PAGE_SIZE:
+                    candidate_set_complete = True
+                    break
+                api_offset += len(page_quotes)
+
+            def volume_key(quote):
+                volume = quote.get("regularMarketVolume")
+                has_volume = (
+                    isinstance(volume, (int, float)) and not isinstance(volume, bool)
+                )
+                return has_volume, volume if has_volume else 0
+
+            quotes.sort(key=volume_key, reverse=True)
+            selected_quotes = quotes[offset:offset + limit]
+        else:
+            result = yf.screen(
+                query,
+                sortField=sort_field,
+                sortAsc=sort_ascending,
+                size=limit,
+                offset=offset,
+            )
+            quotes = result.get("quotes", [])
+            selected_quotes = quotes
     except Exception as e:
         return f"Could not fetch '{screen_type}' from Yahoo Finance right now: {e}"
 
@@ -78,14 +141,44 @@ def simple_screener(screen_type: str, offset: int = 0) -> str:
         "fiftyTwoWeekLow", "averageAnalystRating", "dividendYield", "symbol",
     ]
     rows = []
-    for q in result.get("quotes", []):
+    for index, q in enumerate(selected_quotes, start=offset + 1):
         row = {"name": q.get("longName") or q.get("shortName")}
         row.update({k: q.get(k) for k in fields})
+        if screen_type == "most_actives":
+            volume = q.get("regularMarketVolume")
+            row["rank"] = (
+                index if isinstance(volume, (int, float)) and not isinstance(volume, bool)
+                else None
+            )
+            row["regularMarketVolume"] = volume
         rows.append(row)
 
     kind = {"EquityQuery": "Stock", "FundQuery": "Fund", "ETFQuery": "ETF"}.get(
         type(query).__name__, "Asset")
-    return f"{kind} screener results ({screen_type}):\n" + json.dumps(rows, indent=2)
+    output = f"{kind} screener results ({screen_type}):\n" + json.dumps(rows, indent=2)
+    if screen_type == "most_actives":
+        if len(selected_quotes) < limit:
+            output += (
+                f"\n\nOnly {len(selected_quotes)} stocks were available among "
+                f"{len(quotes)} unique Yahoo Finance screener candidates retrieved."
+            )
+            if reported_total is not None:
+                output += f" Yahoo reported {reported_total} candidates."
+            if not candidate_set_complete:
+                output += " The candidate set may be incomplete."
+            else:
+                output += " Yahoo Finance screener coverage may not include every market listing."
+        missing_volume = sum(
+            not isinstance(q.get("regularMarketVolume"), (int, float))
+            or isinstance(q.get("regularMarketVolume"), bool)
+            for q in selected_quotes
+        )
+        if missing_volume:
+            output += (
+                f"\n{missing_volume} result(s) have no reported daily volume and "
+                "are shown without a rank."
+            )
+    return output
 
 
 # ---------- Tool 2: custom screener with filters + sorting ----------
@@ -106,7 +199,7 @@ def custom_screener(
     sector: str = "",
     sort_by: str = "market_cap",
     ascending: bool = False,
-    min_volume: int = 0,
+    min_volume: int | None = None,
     offset: int = 0,
     min_percent_change: float | None = None,
     limit: int = 5,
@@ -126,8 +219,9 @@ def custom_screener(
             Empty string means all sectors.
         sort_by: one of 'market_cap', 'percent_change', 'price', 'volume', 'pe_ratio'.
         ascending: False sorts highest first (default), True sorts lowest first.
-        min_volume: minimum shares traded today. Use 500000 when ranking by percent
-            change unless the user requests no minimum; 0 means no minimum.
+        min_volume: minimum shares traded today. When omitted for a percentage-change
+            ranking, defaults to 500000; 0 means no minimum and an explicit value
+            overrides the default.
         offset: pagination start point in the sorted results. 0 for the first page.
         min_percent_change: optional minimum daily percentage change in percentage points.
             Pass 0 to return gainers only (strictly greater than 0%); omit for no change filter.
@@ -144,6 +238,10 @@ def custom_screener(
     if offset < 0:
         return "offset must be zero or greater."
 
+    effective_min_volume = min_volume
+    if effective_min_volume is None:
+        effective_min_volume = 500000 if sort_by == "percent_change" else 0
+
     filters = [
         EquityQuery("eq", ["region", "us"]),
         EquityQuery("is-in", ["exchange", "NMS", "NYQ", "NGM", "NCM", "ASE"]),
@@ -154,8 +252,8 @@ def custom_screener(
         filters.append(EquityQuery("lt", ["intradaymarketcap", max_market_cap_millions * 1_000_000]))
     if sector:
         filters.append(EquityQuery("eq", ["sector", sector]))
-    if min_volume > 0:
-        filters.append(EquityQuery("gt", ["dayvolume", min_volume]))
+    if effective_min_volume > 0:
+        filters.append(EquityQuery("gt", ["dayvolume", effective_min_volume]))
     if min_percent_change is not None:
         filters.append(EquityQuery("gt", ["percentchange", min_percent_change]))
 
@@ -241,6 +339,16 @@ def custom_screener(
                 max_market_cap_millions <= 0
                 or quote["marketCap"] < max_market_cap_millions * 1_000_000
             )
+        ]
+
+    # Yahoo may return quotes below the volume predicate; enforce the same threshold
+    # locally before sorting and selecting the requested result page.
+    if effective_min_volume > 0:
+        raw_quotes = [
+            quote for quote in raw_quotes
+            if isinstance(quote.get("regularMarketVolume"), (int, float))
+            and not isinstance(quote.get("regularMarketVolume"), bool)
+            and quote["regularMarketVolume"] > effective_min_volume
         ]
 
     # Yahoo's screener may return rows that do not satisfy its percentage filter.

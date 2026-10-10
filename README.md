@@ -20,7 +20,7 @@ START -> chatbot (Gemini + tools) -> router -> tools -> chatbot -> ... -> END
 
 | Tool | Purpose |
 | --- | --- |
-| `simple_screener` | Predefined Yahoo screens (stocks, funds, ETFs). Results are not ranked by the agent. |
+| `simple_screener` | Predefined Yahoo screens (stocks, funds, ETFs). `most_actives` is ranked locally by daily volume; other predefined screens are not ranked by the agent. |
 | `custom_screener` | US-listed stocks with market cap, sector and volume filters and a real sort order. |
 | `company_snapshot` | Fundamentals and up to 3 headlines for one ticker. |
 
