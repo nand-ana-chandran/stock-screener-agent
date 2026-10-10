@@ -1,7 +1,7 @@
 [project]
 name = "stock-screener"
 version = "0.1.0"
-description = "Add your description here"
+description = "A LangGraph-powered stock screener chat app using Gemini, Streamlit, and Yahoo Finance data"
 readme = "README.md"
 authors = [
     { name = "Nanda", email = "nandanachandran8@gmail.com" }
@@ -15,9 +15,6 @@ dependencies = [
     "streamlit>=1.65.0",
     "yfinance>=1.7.0",
 ]
-
-[project.scripts]
-stock-screener = "stock_screener:main"
 
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13.0"]
