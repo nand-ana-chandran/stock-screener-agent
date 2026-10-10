@@ -4,8 +4,6 @@ A chat app where you ask questions about stocks in plain English and an AI agent
 
 > Informational only, not financial advice. Data comes from Yahoo Finance through the unofficial `yfinance` library.
 
-<!-- Add a 30-second demo GIF here -->
-
 ## What it does
 
 - **Rankings and filters:** "Top small cap tech gainers today", "Largest healthcare companies by market cap". Filters by market cap range and sector, sorts by market cap, % change, price, volume or P/E, and pages through results ("show me the next five").
@@ -37,8 +35,8 @@ Design choices:
 
 ```powershell
 pip install uv
-git clone <your-repo-url>
-cd stock-screener
+git clone https://github.com/nand-ana-chandran/stock-screener-agent.git
+cd stock-screener-agent
 uv sync
 ```
 
@@ -65,7 +63,7 @@ uv run --env-file .env flow.py
 The agent is tested on whether it picks the right tool with the right arguments, using three kinds of checks.
 
 1. **Tool selection and arguments** (`eval.py`): each case lists the expected tool calls and argument checks. Strict: a wrong, missing or extra call fails the turn.
-2. **Held-out set** (`eval_holdout.py`): written after tuning, with different sectors and phrasing than the dev set.
+2. **Held-out set** (`eval_holdout.py`): originally written after tuning, with different sectors and phrasing than the dev set. After issues were found and fixes were made against this set, it no longer represents a fully untouched final test set.
 3. **Number grounding** (`grounding.py`): checks that every number in the final answer appears in the tool output or in the user's prompt or tool arguments. This is a separate metric and is never merged into the pass rate.
 
 Run it:
@@ -81,9 +79,9 @@ uv run test_grounding.py              # offline tests, no API calls
 
 | Set | Cases | Tool selection | Grounding | Notes |
 | --- | --- | --- | --- | --- |
-| Held-out, first clean run | 32 turns | 96.9% (31/32) | n/a | Measured before any changes. This is the clean held-out number. |
-| Dev (`eval_cases`), final run | TODO | TODO | TODO | Fill in after the quota reset. |
-| Held-out, final run | TODO | TODO | TODO | Not a clean held-out score: the set was used for fixes afterwards. |
+| Held-out, first clean run | 32 turns | 96.9% (31/32) | n/a | Historical baseline measured before subsequent fixes; not a final post-fix score. |
+| Dev (`eval_cases`), final run | Not recorded | — | — | A final run result has not been recorded. |
+| Held-out, post-fix run | Not recorded | — | — | The set was used to guide fixes, so this would not be an untouched test score. |
 
 Honest reading of the numbers:
 
