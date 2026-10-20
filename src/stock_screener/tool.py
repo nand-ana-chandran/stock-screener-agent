@@ -101,6 +101,14 @@ def _yahoo_failure_message(error):
     return "Yahoo Finance could not retrieve data right now. Please try again later."
 
 
+def _business_summary(summary, limit=400):
+    excerpt = summary[:limit].rstrip()
+    sentence_ends = list(re.finditer(r"[.!?](?:[\"'’”)]*)?(?=\s|$)", excerpt))
+    if not sentence_ends:
+        return ""
+    return excerpt[:sentence_ends[-1].end()].rstrip()
+
+
 def fetch_all_quotes(query, sort_field, sort_ascending):
     """Fetch every page from yf.screen and return deduplicated quotes.
 
@@ -517,7 +525,7 @@ def company_snapshot(symbol: str) -> str:
         "name": name,
         "sector": info.get("sector"),
         "industry": info.get("industry"),
-        "business_summary": summary[:400] + ("..." if len(summary) > 400 else ""),
+        "business_summary": _business_summary(summary),
         "price": fmt_num(current_price),
         "daily_change_percent": fmt_pct(daily_change_percent / 100) if daily_change_percent is not None else None,
         "quote_currency": quote_cur,
