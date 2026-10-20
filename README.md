@@ -1,5 +1,7 @@
 # Stock Screener Agent
 
+[![Offline tests](https://github.com/nand-ana-chandran/stock-screener-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/nand-ana-chandran/stock-screener-agent/actions/workflows/tests.yml)
+
 A chat app where you ask questions about stocks in plain English and an AI agent answers using live Yahoo Finance data. Built with LangGraph, Gemini and Streamlit, and evaluated with a custom test harness.
 
 > Informational only, not financial advice. Data comes from Yahoo Finance through the unofficial `yfinance` library.
