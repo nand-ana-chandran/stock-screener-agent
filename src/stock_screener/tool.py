@@ -551,21 +551,22 @@ def india_screener(
     the US screeners. Real sector values include Technology, Healthcare,
     Financial Services, Consumer Cyclical, Consumer Defensive, Industrials,
     Energy, Utilities, Real Estate, Basic Materials, and Communication Services.
-    For "IT companies", "IT sector", or "IT services" requests, pass industry="IT".
-    This covers Information Technology Services and software industries, including
-    TCS, Infosys, Wipro, and HCLTech. "software" alone covers software industries
-    only. Use sector="Technology" for "tech" or "technology".
+    For "tech", "technology", or "technology sector", use sector="Technology".
+    Pass industry="IT" only for IT-related wording such as "IT", "IT companies",
+    "IT sector", or "IT services". This covers Information Technology Services
+    and software industries, including TCS, Infosys, Wipro, and HCLTech.
+    "software" alone covers software industries only.
 
     Args:
         symbol: Optional NSE symbol with or without .NS, matched case-insensitively.
         company_name: Optional case-insensitive substring of the company name.
         min_market_cap_crore: Optional minimum market cap in INR crore.
         max_market_cap_crore: Optional maximum market cap in INR crore.
-        sector: Optional sector substring; "tech"/"technology" means Technology.
-        industry: Optional case-insensitive industry substring; pass "IT" for IT
-            companies/sector/services (IT services and software), "software" for
-            software industries only, pharma for Drug Manufacturers, and banks
-            for Banks.
+        sector: Optional sector substring; use "Technology" for tech, technology,
+            or technology sector requests.
+        industry: Optional case-insensitive industry substring; pass "IT" only for
+            IT-related wording (IT companies/sector/services), "software" for software
+            industries only, pharma for Drug Manufacturers, and banks for Banks.
         financial_currency: Optional financial statement currency, INR or USD.
         min_trailing_pe: Optional minimum trailing P/E.
         max_trailing_pe: Optional maximum trailing P/E.

@@ -31,6 +31,35 @@ class TestEvalCaseSelection(unittest.TestCase):
             ["india_nifty", "india_sector"],
         )
 
+    def test_india_sector_pe_still_requires_technology_sector(self):
+        case = next(
+            case for case in eval_module.CASES
+            if case["id"] == "india_sector_pe"
+        )
+        expected = case["turns"][0]["calls"]
+        good_args = {
+            "sector": "Technology",
+            "min_trailing_pe": 10,
+            "max_trailing_pe": 25,
+            "sort_by": "trailing_pe",
+            "sort_order": "asc",
+        }
+        self.assertTrue(check_turn(
+            expected,
+            [{"name": "india_screener", "args": good_args}],
+        )[1])
+        self.assertFalse(check_turn(
+            expected,
+            [{
+                "name": "india_screener",
+                "args": {
+                    **good_args,
+                    "sector": None,
+                    "industry": "IT",
+                },
+            }],
+        )[1])
+
     def test_case_ids_remain_supported(self):
         selected = select_cases(CASES, only_ids=["snapshot_nvda"])
         self.assertEqual([case["id"] for case in selected], ["snapshot_nvda"])
@@ -310,6 +339,45 @@ class TestEvalCaseSelection(unittest.TestCase):
         )
         mixed_result = check_answer(case, mixed_currency_ranking, two_groups)
         self.assertTrue(any("mixes USD and INR" in reason for reason in mixed_result))
+
+    def test_saved_it_cash_answers_are_checked_against_currency_groups(self):
+        case = next(
+            case for case in eval_module.CASES
+            if case["id"] == "india_it_companies_by_cash"
+        )
+        tool_output = [json.dumps({
+            "currency_groups": {"INR": 26, "USD": 2},
+        })]
+        saved_answer_1 = (
+            "### Other Currency Groups (Excluded from the above ranking)\n"
+            "Rows reporting in other currencies are not ranked in this ranking:\n"
+            "- **USD (2 companies):** HCLTECH.NS, INFY.NS.\n"
+            '*(Use `financial_currency="USD"` to view the USD group.)*'
+        )
+        saved_answer_2 = (
+            "The ranking below includes companies reporting in **INR** "
+            "(26 companies total). Companies reporting in other currencies "
+            "(such as the 2 companies in USD: HCLTECH.NS and INFY.NS) are "
+            "excluded from this ranking and are not compared across currency groups."
+        )
+        saved_answer_3 = (
+            "Rows reporting in INR (26 companies) are ranked within that currency "
+            "only. Rows reporting in other currencies are excluded from this ranking: "
+            "USD (2): HCLTECH.NS, INFY.NS."
+        )
+        for answer in (saved_answer_1, saved_answer_2, saved_answer_3):
+            with self.subTest(answer=answer):
+                self.assertEqual(check_answer(case, answer, tool_output), [])
+
+        no_usd_statement = (
+            "The INR rows are ranked by cash. The USD group has 2 companies."
+        )
+        missing_status = check_answer(case, no_usd_statement, tool_output)
+        self.assertTrue(any("non-ranked currency groups" in issue for issue in missing_status))
+
+        no_usd_reference = "Rows reporting in other currencies are excluded from this ranking."
+        missing_group = check_answer(case, no_usd_reference, tool_output)
+        self.assertTrue(any("USD group or its count" in issue for issue in missing_group))
 
     def test_it_cash_eval_allows_two_screener_calls(self):
         case = next(
