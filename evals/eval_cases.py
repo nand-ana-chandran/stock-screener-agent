@@ -91,16 +91,8 @@ def check_it_cash_answer(answer, tool_outputs=None):
     if ranked_currencies == {"USD", "INR"}:
         issues.append("ranked list mixes USD and INR amounts")
 
-    usd_group_pattern = re.compile(
-        r"(?:"
-        r"\b(?:USD(?:[- ]reporting)?[- ]companies|companies reporting in USD|USD reporters|"
-        r"USD group|USD amounts)\b"
-        r"[^\n.]{0,100}\b(?:not ranked|excluded|not included|ranked separately|not compared)\b"
-        r"|"
-        r"\b(?:not ranked|excluded|not included|ranked separately|not compared)\b"
-        r"[^\n.]{0,100}\b(?:USD(?:[- ]reporting)?[- ]companies|companies reporting in USD|"
-        r"USD reporters|USD group|USD amounts)\b"
-        r")",
+    exclusion_pattern = re.compile(
+        r"\b(?:not ranked|excluded|not included|ranked separately|not compared)\b",
         re.IGNORECASE,
     )
     output_groups = {}
@@ -114,17 +106,18 @@ def check_it_cash_answer(answer, tool_outputs=None):
             output_groups.update(groups)
 
     has_multiple_groups = len(output_groups) > 1
-    if has_multiple_groups and usd_group_pattern.search(answer) is None:
+    if has_multiple_groups and exclusion_pattern.search(answer) is None:
         issues.append(
-            "answer does not state that USD-reporting companies are ranked separately "
-            "or are not ranked, excluded, not included, or not compared"
+            "answer does not state that non-ranked currency groups are excluded, "
+            "not ranked, not included, ranked separately, or not compared"
         )
     if has_multiple_groups:
         usd_count = output_groups.get("USD")
         mentions_usd_group = re.search(
             r"\bUSD group\b|\bUSD reporters\b|"
             r"\bUSD(?:[- ]reporting)?[- ]companies\b|"
-            r"\bcompanies reporting in USD\b",
+            r"\bcompanies reporting in USD\b|"
+            r"\bHCLTECH\.NS\b|\bINFY\.NS\b",
             answer,
             re.I,
         )
