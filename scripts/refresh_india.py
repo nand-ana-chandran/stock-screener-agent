@@ -3,7 +3,9 @@
 import argparse
 import csv
 import json
+import logging
 import re
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +18,8 @@ OUTPUT_PATH = DATA_DIR / "india_snapshot.json"
 RETRIES = 3
 INITIAL_BACKOFF_SECONDS = 1
 REQUEST_DELAY_SECONDS = 0.5
+SNAPSHOT_REPLACE_RETRIES = 5
+SNAPSHOT_REPLACE_BACKOFF_SECONDS = 0.1
 FIELDS = {
     "price": ("regularMarketPrice", "currentPrice"),
     "market_cap": ("marketCap",),
@@ -30,6 +34,11 @@ FIELDS = {
     "financial_currency": ("financialCurrency",),
 }
 REQUIRED_FIELDS = tuple(FIELDS) + ("fifty_two_week_low", "fifty_two_week_high")
+
+
+class _Suppress404Filter(logging.Filter):
+    def filter(self, record):
+        return re.search(r"\b404\b", record.getMessage()) is None
 
 
 def _parse_args():
@@ -98,13 +107,19 @@ def _load_symbols(csv_path):
 
 def _fetch_info(symbol):
     last_error = None
-    for attempt in range(RETRIES + 1):
-        try:
-            return yf.Ticker(symbol).info or {}, None
-        except Exception as error:
-            last_error = error
-            if attempt < RETRIES:
-                time.sleep(INITIAL_BACKOFF_SECONDS * (2 ** attempt))
+    yfinance_logger = logging.getLogger("yfinance")
+    not_found_filter = _Suppress404Filter()
+    yfinance_logger.addFilter(not_found_filter)
+    try:
+        for attempt in range(RETRIES + 1):
+            try:
+                return yf.Ticker(symbol).info or {}, None
+            except Exception as error:
+                last_error = error
+                if attempt < RETRIES:
+                    time.sleep(INITIAL_BACKOFF_SECONDS * (2 ** attempt))
+    finally:
+        yfinance_logger.removeFilter(not_found_filter)
     return {}, type(last_error).__name__
 
 
@@ -145,7 +160,20 @@ def _write_snapshot(path, snapshot):
     with temporary_path.open("w", encoding="utf-8") as destination:
         json.dump(snapshot, destination, indent=2, ensure_ascii=False)
         destination.write("\n")
-    temporary_path.replace(path)
+    for attempt in range(SNAPSHOT_REPLACE_RETRIES):
+        try:
+            temporary_path.replace(path)
+            return
+        except PermissionError as error:
+            if attempt + 1 == SNAPSHOT_REPLACE_RETRIES:
+                message = (
+                    f"Could not replace snapshot {path} after "
+                    f"{SNAPSHOT_REPLACE_RETRIES} attempts; temporary file left at "
+                    f"{temporary_path}"
+                )
+                print(message, file=sys.stderr)
+                raise PermissionError(message) from error
+            time.sleep(SNAPSHOT_REPLACE_BACKOFF_SECONDS * (attempt + 1))
 
 
 def refresh(csv_path, output_path=OUTPUT_PATH):
@@ -175,7 +203,20 @@ def refresh(csv_path, output_path=OUTPUT_PATH):
         "fetched_at": previous.get("fetched_at"),
         "tickers": tickers,
     }
-    pending = [symbol for symbol in symbols if tickers.get(symbol, {}).get("status") not in ("ok", "partial")]
+    for symbol in symbols:
+        if symbol.upper().startswith("DUMMY"):
+            tickers[symbol] = {
+                "status": "skipped",
+                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "error_type": None,
+                "reason": "Dummy symbol skipped",
+            }
+    pending = [
+        symbol
+        for symbol in symbols
+        if tickers.get(symbol, {}).get("status")
+        not in ("ok", "partial", "skipped")
+    ]
     total_requests = len(pending)
     for index, symbol in enumerate(pending):
         info, error_type = _fetch_info(symbol)
@@ -189,13 +230,14 @@ def refresh(csv_path, output_path=OUTPUT_PATH):
     _write_snapshot(output_path, snapshot)
     counts = {
         status: sum(record.get("status") == status for record in tickers.values())
-        for status in ("ok", "partial", "failed")
+        for status in ("ok", "partial", "failed", "skipped")
     }
     failed_symbols = [
         symbol for symbol in symbols if tickers.get(symbol, {}).get("status") == "failed"
     ]
     print(
-        f"ok={counts['ok']} partial={counts['partial']} failed={counts['failed']}"
+        f"ok={counts['ok']} partial={counts['partial']} "
+        f"failed={counts['failed']} skipped={counts['skipped']}"
     )
     print(f"Failed symbols: {', '.join(failed_symbols) if failed_symbols else 'none'}")
     return snapshot
