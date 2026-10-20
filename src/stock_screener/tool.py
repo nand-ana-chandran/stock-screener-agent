@@ -1,6 +1,8 @@
 import os
 import re
 import json
+import sys
+import time
 from datetime import datetime, timezone
 
 from langchain.tools import tool
@@ -31,6 +33,74 @@ def fmt_num(x, digits=2):
 SCREENER_PAGE_SIZE = 250
 
 
+class YahooFinanceError(Exception):
+    def __init__(self, kind, status):
+        self.kind = kind
+        self.status = status
+
+
+def _http_status(error):
+    current = error
+    seen = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        response = getattr(current, "response", None)
+        status = (
+            getattr(response, "status_code", None)
+            or getattr(current, "status_code", None)
+            or getattr(current, "code", None)
+        )
+        if isinstance(status, int):
+            return status
+        match = re.search(r"\bHTTP(?:\s+status)?\s*[:=]?\s*(401|403|429)\b", str(current), re.I)
+        if match:
+            return int(match.group(1))
+        current = current.__cause__ or current.__context__
+    return None
+
+
+def _yahoo_error_kind(error, status):
+    message = str(error).lower()
+    if status in (401, 403, 429) or any(
+        marker in message
+        for marker in ("invalid crumb", "too many requests", "rate limit", "ratelimit")
+    ):
+        return "blocked"
+    error_name = type(error).__name__.lower()
+    if isinstance(error, (TimeoutError, ConnectionError, OSError)) or any(
+        marker in error_name
+        for marker in ("timeout", "connection", "network", "transport", "maxretry")
+    ):
+        return "network"
+    return "other"
+
+
+def _call_yahoo(operation):
+    for attempt in range(3):
+        try:
+            return operation()
+        except Exception as error:
+            status = _http_status(error)
+            kind = _yahoo_error_kind(error, status)
+            if kind in ("blocked", "network") and attempt < 2:
+                time.sleep(2 ** attempt)
+                continue
+            print(
+                f"Yahoo Finance request failed: exception_type={type(error).__name__} "
+                f"http_status={status if status is not None else 'unknown'}",
+                file=sys.stderr,
+            )
+            raise YahooFinanceError(kind, status) from None
+
+
+def _yahoo_failure_message(error):
+    if error.kind == "blocked":
+        return "Yahoo is rate-limiting this host. Please try again later."
+    if error.kind == "network":
+        return "Could not connect to Yahoo Finance due to a network error or timeout. Please try again later."
+    return "Yahoo Finance could not retrieve data right now. Please try again later."
+
+
 def fetch_all_quotes(query, sort_field, sort_ascending):
     """Fetch every page from yf.screen and return deduplicated quotes.
 
@@ -48,12 +118,14 @@ def fetch_all_quotes(query, sort_field, sort_ascending):
     last_result = None
 
     while True:
-        last_result = yf.screen(
-            query,
-            sortField=sort_field,
-            sortAsc=sort_ascending,
-            size=SCREENER_PAGE_SIZE,
-            offset=api_offset,
+        last_result = _call_yahoo(
+            lambda: yf.screen(
+                query,
+                sortField=sort_field,
+                sortAsc=sort_ascending,
+                size=SCREENER_PAGE_SIZE,
+                offset=api_offset,
+            )
         )
         if reported_total is None:
             reported_total = last_result.get("total")
@@ -144,17 +216,19 @@ def simple_screener(screen_type: str, offset: int = 0, limit: int = 25) -> str:
             quotes.sort(key=volume_key, reverse=True)
             selected_quotes = quotes[offset:offset + limit]
         else:
-            result = yf.screen(
-                query,
-                sortField=sort_field,
-                sortAsc=sort_ascending,
-                size=limit,
-                offset=offset,
+            result = _call_yahoo(
+                lambda: yf.screen(
+                    query,
+                    sortField=sort_field,
+                    sortAsc=sort_ascending,
+                    size=limit,
+                    offset=offset,
+                )
             )
             quotes = result.get("quotes", [])
             selected_quotes = quotes
-    except Exception as e:
-        return f"Could not fetch '{screen_type}' from Yahoo Finance right now: {e}"
+    except YahooFinanceError as error:
+        return _yahoo_failure_message(error)
 
     if os.getenv("DEBUG_DUMP"):
         with open("output.json", "w") as f:
@@ -285,8 +359,8 @@ def custom_screener(
         raw_quotes, reported_total, candidate_set_complete, result = fetch_all_quotes(
             query, SORT_FIELDS[sort_by], ascending
         )
-    except Exception as e:
-        return f"Screener error: {e}"
+    except YahooFinanceError as error:
+        return _yahoo_failure_message(error)
 
     retrieved_candidate_count = len(raw_quotes)
 
@@ -418,10 +492,9 @@ def company_snapshot(symbol: str) -> str:
     """
     symbol = symbol.strip().upper()
     try:
-        ticker = yf.Ticker(symbol)
-        info = ticker.info
-    except Exception as e:
-        return f"Could not fetch data for {symbol}: {e}"
+        info = _call_yahoo(lambda: yf.Ticker(symbol).info)
+    except YahooFinanceError as error:
+        return _yahoo_failure_message(error)
 
     if not info or not (info.get("longName") or info.get("shortName")):
         return f"No data found for '{symbol}'. Check the ticker symbol."
@@ -476,7 +549,7 @@ def company_snapshot(symbol: str) -> str:
     # yf.Search is used because Ticker.news returned nothing in testing.
     headlines = []
     try:
-        news = yf.Search(symbol, news_count=3).news or []
+        news = _call_yahoo(lambda: yf.Search(symbol, news_count=3).news) or []
         for item in news[:3]:
             ts = item.get("providerPublishTime")
             published = (
