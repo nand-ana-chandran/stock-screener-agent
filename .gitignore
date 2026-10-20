@@ -18,3 +18,4 @@ eval_results_*.json
 
 data/sample/
 data/*.tmp
+data/india_snapshot.json
