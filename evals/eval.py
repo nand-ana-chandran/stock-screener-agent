@@ -19,7 +19,7 @@ MODEL = os.getenv("MODEL_NAME", "gemini-3.5-flash-lite")
 GUARD_LABEL = "on" if TOOL_GUARD else "off"
 SLEEP_SECONDS = 6            # pause between turns (raise it if you still hit API errors)
 RETRY_WAITS = [20, 40, 80]   # seconds to wait before each retry of a failed case
-VALID_TOOLS = {"simple_screener", "custom_screener", "company_snapshot"}
+VALID_TOOLS = {"simple_screener", "custom_screener", "company_snapshot", "india_screener"}
 
 # Tool defaults, so an omitted argument is judged as its default value
 DEFAULTS = {
@@ -186,28 +186,48 @@ def summarize(records, repeats):
         print("WARNING: the numbers above cover only completed turns. Report the error count with them.")
 
 
-def main():
-    # Usage:  python evals/eval.py [repeats] [case_id ...]
-    #   python evals/eval.py 3                        -> all cases, 3 repeats
-    #   python evals/eval.py 5 cheap_largecap_pe      -> only that case, 5 repeats
-    repeats = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    only = set(sys.argv[2:])
-
-    known = {c["id"] for c in CASES}
+def select_cases(case_list, only_ids=None, prefix=None):
+    known = {case["id"] for case in case_list}
+    only = set(only_ids or [])
     unknown = only - known
     if unknown:
-        print(f"Unknown case id(s): {sorted(unknown)}\nValid ids: {sorted(known)}")
-        return
-    cases = [c for c in CASES if not only or c["id"] in only]
+        raise ValueError(f"Unknown case id(s): {sorted(unknown)}")
+    if prefix and only:
+        raise ValueError("Use either case ids or --prefix, not both.")
+    selected = [
+        case for case in case_list
+        if (not only or case["id"] in only)
+        and (not prefix or case["id"].startswith(prefix))
+    ]
+    if prefix and not selected:
+        raise ValueError(f"No eval cases found with prefix {prefix!r}.")
+    return selected
 
-    tag = "_subset" if only else ""
+
+def main():
+    # Usage: python evals/eval.py [repeats] [case_id ...] [--prefix PREFIX]
+    #   python evals/eval.py 3 --prefix india_ -> all India cases, 3 repeats
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run stock screener evaluation cases.")
+    parser.add_argument("repeats", nargs="?", type=int, default=1)
+    parser.add_argument("case_ids", nargs="*")
+    parser.add_argument("--prefix", help="Run only cases whose id starts with this prefix.")
+    args = parser.parse_args()
+
+    try:
+        cases = select_cases(CASES, args.case_ids, args.prefix)
+    except ValueError as error:
+        parser.error(str(error))
+    subset = bool(args.case_ids or args.prefix)
+    tag = "_subset" if subset else ""
     out = (f"eval_results_{MODEL}_{CASES_MODULE}_guard{GUARD_LABEL}{tag}_"
            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-    print(f"Model: {MODEL} | tool guard: {GUARD_LABEL} | cases: {len(cases)} | repeats: {repeats}\n")
+    print(f"Model: {MODEL} | tool guard: {GUARD_LABEL} | cases: {len(cases)} | repeats: {args.repeats}\n")
 
     records, error_cases_in_a_row, stop = [], 0, False
     try:
-        for rep in range(repeats):
+        for rep in range(args.repeats):
             for case in cases:
                 case_records = run_case(case, rep)
                 for rec in case_records:
@@ -227,7 +247,7 @@ def main():
     except KeyboardInterrupt:
         print("\nInterrupted. Partial results are saved.")
 
-    summarize(records, repeats)
+    summarize(records, args.repeats)
     print(f"Saved {out}")
 
 
