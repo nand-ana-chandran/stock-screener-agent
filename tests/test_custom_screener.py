@@ -3,7 +3,7 @@ import os
 import tempfile
 from unittest.mock import patch
 
-from tool import custom_screener
+from stock_screener.tool import custom_screener
 
 
 def run_in_temp_dir(args, quotes):
@@ -11,7 +11,7 @@ def run_in_temp_dir(args, quotes):
     with tempfile.TemporaryDirectory() as temp_directory:
         try:
             os.chdir(temp_directory)
-            with patch("tool.yf.screen", return_value={"quotes": quotes}) as screen:
+            with patch("stock_screener.tool.yf.screen", return_value={"quotes": quotes}) as screen:
                 result = custom_screener.invoke(args)
         finally:
             os.chdir(previous_directory)
@@ -108,7 +108,7 @@ def test_gainers_filter_volume_before_selecting_top_ten_across_pages():
     with tempfile.TemporaryDirectory() as temp_directory:
         try:
             os.chdir(temp_directory)
-            with patch("tool.yf.screen", side_effect=screen_page) as screen:
+            with patch("stock_screener.tool.yf.screen", side_effect=screen_page) as screen:
                 result = custom_screener.invoke({
                     "sort_by": "percent_change",
                     "ascending": False,
@@ -290,7 +290,7 @@ def test_top_ten_fetches_all_pages_then_sorts_and_limits_results():
     with tempfile.TemporaryDirectory() as temp_directory:
         try:
             os.chdir(temp_directory)
-            with patch("tool.yf.screen", side_effect=screen_page) as screen:
+            with patch("stock_screener.tool.yf.screen", side_effect=screen_page) as screen:
                 result = custom_screener.invoke({
                     "sector": "Technology",
                     "sort_by": "percent_change",
@@ -339,7 +339,7 @@ def test_insufficient_results_are_reported_without_claiming_market_coverage():
     with tempfile.TemporaryDirectory() as temp_directory:
         try:
             os.chdir(temp_directory)
-            with patch("tool.yf.screen", side_effect=screen_page) as screen:
+            with patch("stock_screener.tool.yf.screen", side_effect=screen_page) as screen:
                 result = custom_screener.invoke({
                     "sort_by": "percent_change",
                     "ascending": False,
@@ -371,7 +371,7 @@ def test_incomplete_yahoo_candidate_set_is_reported():
     with tempfile.TemporaryDirectory() as temp_directory:
         try:
             os.chdir(temp_directory)
-            with patch("tool.yf.screen", side_effect=pages) as screen:
+            with patch("stock_screener.tool.yf.screen", side_effect=pages) as screen:
                 result = custom_screener.invoke({
                     "sort_by": "percent_change",
                     "ascending": False,

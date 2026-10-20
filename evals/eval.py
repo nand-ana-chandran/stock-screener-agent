@@ -7,11 +7,13 @@ from collections import Counter
 from datetime import datetime
 
 import importlib
-from grounding import check_grounding
+from stock_screener.grounding import check_grounding
 
 CASES_MODULE = os.getenv("CASES_MODULE", "eval_cases")
+# Make eval_cases / eval_holdout importable by name from within this directory.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 CASES = importlib.import_module(CASES_MODULE).CASES
-from flow import graph, GUARD_STATS, TOOL_GUARD
+from stock_screener.flow import graph, GUARD_STATS, TOOL_GUARD
 
 MODEL = os.getenv("MODEL_NAME", "gemini-3.5-flash-lite")
 GUARD_LABEL = "on" if TOOL_GUARD else "off"
@@ -185,9 +187,9 @@ def summarize(records, repeats):
 
 
 def main():
-    # Usage:  uv run eval.py [repeats] [case_id ...]
-    #   uv run eval.py 3                        -> all cases, 3 repeats
-    #   uv run eval.py 5 cheap_largecap_pe      -> only that case, 5 repeats
+    # Usage:  python evals/eval.py [repeats] [case_id ...]
+    #   python evals/eval.py 3                        -> all cases, 3 repeats
+    #   python evals/eval.py 5 cheap_largecap_pe      -> only that case, 5 repeats
     repeats = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     only = set(sys.argv[2:])
 

@@ -1,5 +1,5 @@
 import json
-from tool import simple_screener
+from stock_screener.tool import simple_screener
 
 for s in ["day_gainers", "day_losers", "most_shorted_stocks",
           "undervalued_large_caps", "top_mutual_funds"]:
