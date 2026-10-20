@@ -3,7 +3,7 @@ import os
 import tempfile
 from unittest.mock import patch
 
-from tool import simple_screener
+from stock_screener.tool import simple_screener
 
 
 def run_screener(args, side_effect):
@@ -11,7 +11,7 @@ def run_screener(args, side_effect):
     with tempfile.TemporaryDirectory() as temp_directory:
         try:
             os.chdir(temp_directory)
-            with patch("tool.yf.screen", side_effect=side_effect) as screen:
+            with patch("stock_screener.tool.yf.screen", side_effect=side_effect) as screen:
                 result = simple_screener.invoke(args)
         finally:
             os.chdir(previous_directory)

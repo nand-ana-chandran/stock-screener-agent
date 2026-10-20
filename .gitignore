@@ -13,3 +13,5 @@ wheels/
 .env
 output.json
 eval_results_*.json
+
+.vscode/

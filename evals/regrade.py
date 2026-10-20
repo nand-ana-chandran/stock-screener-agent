@@ -3,7 +3,7 @@ import glob
 import json
 import os
 
-from grounding import check_grounding
+from stock_screener.grounding import check_grounding
 
 
 def regrade(path):

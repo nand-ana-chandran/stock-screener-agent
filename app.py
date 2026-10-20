@@ -1,6 +1,6 @@
 import uuid
 import streamlit as st
-from flow import graph
+from stock_screener.flow import graph
 
 st.set_page_config(page_title="Stock Screener Agent", page_icon="📈")
 st.title("📈 Stock Screener Agent")

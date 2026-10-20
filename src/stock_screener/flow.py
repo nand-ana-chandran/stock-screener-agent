@@ -1,4 +1,3 @@
-# 1. Bring in dependencies
 import os
 import json
 import difflib
@@ -11,22 +10,18 @@ from langgraph.prebuilt import ToolNode
 from langchain_google_genai import ChatGoogleGenerativeAI
 from colorama import Fore
 
-from tool import simple_screener, custom_screener, company_snapshot
+from .tool import simple_screener, custom_screener, company_snapshot
 
-# 2. Create LLM
 llm = ChatGoogleGenerativeAI(
     model=os.getenv("MODEL_NAME", "gemini-3.5-flash-lite"),
     timeout=90,
     max_retries=1,
 )
 
-# 8. Create tool list
 tools = [simple_screener, custom_screener, company_snapshot]
 
-# 9. Bind LLM with tools
 llm_with_tools = llm.bind_tools(tools)
 
-# 10. Create tool node
 tool_node = ToolNode(tools)
 
 SYSTEM_PROMPT = (
@@ -97,12 +92,10 @@ def sanitize_tool_calls(calls):
     return clean
 
 
-# 3. Create state
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
 
-# 4. Build LLM node
 def chatbot(state: State):
     messages = [("system", SYSTEM_PROMPT)] + state["messages"]
     response = llm_with_tools.invoke(messages)
@@ -118,7 +111,6 @@ def chatbot(state: State):
     return {"messages": [response]}
 
 
-# 11. Create router
 def router(state: State):
     last_message = state["messages"][-1]
     if hasattr(last_message, "tool_calls") and last_message.tool_calls:
@@ -126,21 +118,17 @@ def router(state: State):
     return END
 
 
-# 5. Assemble graph
 graph_builder = StateGraph(State)
 graph_builder.add_node("chatbot", chatbot)
 graph_builder.add_node("tools", tool_node)
 graph_builder.add_edge(START, "chatbot")
 
-# 12. Update graph for tools
 graph_builder.add_conditional_edges("chatbot", router, {"tools": "tools", END: END})
 graph_builder.add_edge("tools", "chatbot")
 
-# 6. Add memory and compile graph
 memory = InMemorySaver()
 graph = graph_builder.compile(checkpointer=memory)
 
-# 7. Build call loop and run it
 if __name__ == "__main__":
     config = {"configurable": {"thread_id": "1234"}}
     while True:

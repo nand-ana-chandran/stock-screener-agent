@@ -1,4 +1,4 @@
-# 8. Create tools
+import os
 import re
 import json
 from datetime import datetime, timezone
@@ -26,6 +26,65 @@ def fmt_pct(x):
 def fmt_num(x, digits=2):
     """37.888252 -> 37.89. Keeps long raw decimals away from the LLM."""
     return None if x is None else round(x, digits)
+
+# ---------- Pagination helper ----------
+SCREENER_PAGE_SIZE = 250
+
+
+def fetch_all_quotes(query, sort_field, sort_ascending):
+    """Fetch every page from yf.screen and return deduplicated quotes.
+
+    Returns:
+        quotes (list): all deduplicated quote dicts.
+        reported_total (int | None): total candidates Yahoo reported, or None.
+        candidate_set_complete (bool): True when the full candidate set was retrieved.
+        last_result (dict | None): the raw dict from the final yf.screen call.
+    """
+    quotes = []
+    seen_symbols = set()
+    api_offset = 0
+    reported_total = None
+    candidate_set_complete = False
+    last_result = None
+
+    while True:
+        last_result = yf.screen(
+            query,
+            sortField=sort_field,
+            sortAsc=sort_ascending,
+            size=SCREENER_PAGE_SIZE,
+            offset=api_offset,
+        )
+        if reported_total is None:
+            reported_total = last_result.get("total")
+
+        page_quotes = last_result.get("quotes", [])
+        if not page_quotes:
+            candidate_set_complete = (
+                reported_total is None or len(quotes) >= reported_total
+            )
+            break
+
+        previous_count = len(quotes)
+        for quote in page_quotes:
+            symbol = quote.get("symbol")
+            if symbol is None or symbol not in seen_symbols:
+                quotes.append(quote)
+                if symbol is not None:
+                    seen_symbols.add(symbol)
+
+        if reported_total is not None and len(quotes) >= reported_total:
+            candidate_set_complete = True
+            break
+        if len(quotes) == previous_count:
+            break
+        if reported_total is None and len(page_quotes) < SCREENER_PAGE_SIZE:
+            candidate_set_complete = True
+            break
+        api_offset += len(page_quotes)
+
+    return quotes, reported_total, candidate_set_complete, last_result
+
 
 # ---------- Tool 1: predefined screener ----------
 @tool
@@ -56,7 +115,7 @@ def simple_screener(screen_type: str, offset: int = 0, limit: int = 25) -> str:
         unavailable volumes are null and are not ranked. The first line identifies stocks,
         funds or ETFs.
     """
-    # ... body unchanged from your current version ...
+
     if screen_type not in yf.PREDEFINED_SCREENER_QUERIES:
         valid = ", ".join(yf.PREDEFINED_SCREENER_QUERIES.keys())
         return f"Unknown screen_type '{screen_type}'. Valid options: {valid}"
@@ -71,45 +130,9 @@ def simple_screener(screen_type: str, offset: int = 0, limit: int = 25) -> str:
     sort_ascending = str(preset.get("sortType", "DESC")).upper() == "ASC"
     try:
         if screen_type == "most_actives":
-            quotes = []
-            seen_symbols = set()
-            api_offset = 0
-            reported_total = None
-            candidate_set_complete = False
-            while True:
-                result = yf.screen(
-                    query,
-                    sortField=sort_field,
-                    sortAsc=sort_ascending,
-                    size=SCREENER_PAGE_SIZE,
-                    offset=api_offset,
-                )
-                if reported_total is None:
-                    reported_total = result.get("total")
-                page_quotes = result.get("quotes", [])
-                if not page_quotes:
-                    candidate_set_complete = (
-                        reported_total is None or len(quotes) >= reported_total
-                    )
-                    break
-
-                previous_count = len(quotes)
-                for quote in page_quotes:
-                    symbol = quote.get("symbol")
-                    if symbol is None or symbol not in seen_symbols:
-                        quotes.append(quote)
-                        if symbol is not None:
-                            seen_symbols.add(symbol)
-
-                if reported_total is not None and len(quotes) >= reported_total:
-                    candidate_set_complete = True
-                    break
-                if len(quotes) == previous_count:
-                    break
-                if reported_total is None and len(page_quotes) < SCREENER_PAGE_SIZE:
-                    candidate_set_complete = True
-                    break
-                api_offset += len(page_quotes)
+            quotes, reported_total, candidate_set_complete, result = fetch_all_quotes(
+                query, sort_field, sort_ascending
+            )
 
             def volume_key(quote):
                 volume = quote.get("regularMarketVolume")
@@ -133,8 +156,9 @@ def simple_screener(screen_type: str, offset: int = 0, limit: int = 25) -> str:
     except Exception as e:
         return f"Could not fetch '{screen_type}' from Yahoo Finance right now: {e}"
 
-    with open("output.json", "w") as f:
-        json.dump(result, f, indent=2)
+    if os.getenv("DEBUG_DUMP"):
+        with open("output.json", "w") as f:
+            json.dump(result, f, indent=2)
 
     fields = [
         "bid", "ask", "exchange", "fiftyTwoWeekHigh",
@@ -189,7 +213,6 @@ SORT_FIELDS = {
     "volume": "dayvolume",
     "pe_ratio": "peratio.lasttwelvemonths",
 }
-SCREENER_PAGE_SIZE = 250
 
 
 @tool
@@ -259,55 +282,17 @@ def custom_screener(
 
     try:
         query = EquityQuery("and", filters)
-        result = None
-        raw_quotes = []
-        seen_symbols = set()
-        api_offset = 0
-        reported_total = None
-        candidate_set_complete = False
-
-        while True:
-            result = yf.screen(
-                query,
-                sortField=SORT_FIELDS[sort_by],
-                sortAsc=ascending,
-                size=SCREENER_PAGE_SIZE,
-                offset=api_offset,
-            )
-            if reported_total is None:
-                reported_total = result.get("total")
-
-            page_quotes = result.get("quotes", [])
-            if not page_quotes:
-                candidate_set_complete = (
-                    reported_total is None or len(raw_quotes) >= reported_total
-                )
-                break
-
-            previous_count = len(raw_quotes)
-            for quote in page_quotes:
-                symbol = quote.get("symbol")
-                if symbol is None or symbol not in seen_symbols:
-                    raw_quotes.append(quote)
-                    if symbol is not None:
-                        seen_symbols.add(symbol)
-
-            if reported_total is not None and len(raw_quotes) >= reported_total:
-                candidate_set_complete = True
-                break
-            if len(raw_quotes) == previous_count:
-                break
-            if reported_total is None and len(page_quotes) < SCREENER_PAGE_SIZE:
-                candidate_set_complete = True
-                break
-            api_offset += len(page_quotes)
+        raw_quotes, reported_total, candidate_set_complete, result = fetch_all_quotes(
+            query, SORT_FIELDS[sort_by], ascending
+        )
     except Exception as e:
         return f"Screener error: {e}"
 
     retrieved_candidate_count = len(raw_quotes)
 
-    with open("output.json", "w") as f:
-        json.dump(result, f, indent=2)
+    if os.getenv("DEBUG_DUMP"):
+        with open("output.json", "w") as f:
+            json.dump(result, f, indent=2)
 
     fields = [
         "symbol", "shortName", "exchange", "regularMarketPrice",
