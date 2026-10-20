@@ -63,10 +63,69 @@ class TestEvalCaseSelection(unittest.TestCase):
             {"min_revenue_growth": 10, "sector": "Healthcare"},
             {
                 "min_revenue_growth": 10,
+                "industry": "Pharma Retail",
+            },
+            {
+                "min_revenue_growth": 10,
                 "industry": "Drug Manufacturers - Specialty & Generic",
             },
         ):
             self.assertTrue(check_turn(
+                expected,
+                [{"name": "india_screener", "args": args}],
+            )[1])
+        for args in (
+            {"min_revenue_growth": 9.99, "sector": "Healthcare"},
+            {"min_revenue_growth": 10, "industry": "Biotechnology"},
+            {"min_revenue_growth": 10, "sector": "Technology"},
+        ):
+            result = check_turn(
+                expected,
+                [{"name": "india_screener", "args": args}],
+            )
+            self.assertFalse(result[1])
+            self.assertIn("min_revenue_growth >= 10", result[2][0])
+            self.assertIn("industry containing 'pharma' or 'drug'", result[2][0])
+
+    def test_small_cap_banks_require_market_cap_ascending_and_bank_industry(self):
+        case = next(
+            case for case in eval_module.CASES
+            if case["id"] == "india_small_cap_sector"
+        )
+        expected = case["turns"][0]["calls"]
+        for args in (
+            {
+                "industry": "Banks",
+                "sort_by": "market_cap",
+                "sort_order": "asc",
+            },
+            {
+                "industry": "Commercial BANKS",
+                "sector": "Financial Services",
+                "sort_by": "market_cap",
+                "sort_order": "asc",
+            },
+        ):
+            self.assertTrue(check_turn(
+                expected,
+                [{"name": "india_screener", "args": args}],
+            )[1])
+        for args in (
+            {"industry": "Banks", "sort_by": "market_cap", "sort_order": "desc"},
+            {"industry": "Banks", "sort_by": "price", "sort_order": "asc"},
+            {
+                "industry": "Banks",
+                "sector": "Technology",
+                "sort_by": "market_cap",
+                "sort_order": "asc",
+            },
+            {
+                "sector": "Financial Services",
+                "sort_by": "market_cap",
+                "sort_order": "asc",
+            },
+        ):
+            self.assertFalse(check_turn(
                 expected,
                 [{"name": "india_screener", "args": args}],
             )[1])
@@ -100,7 +159,20 @@ class TestEvalCaseSelection(unittest.TestCase):
         )
         eval_cases = importlib.import_module("eval_cases")
         with patch.object(eval_cases, "load_snapshot", return_value=snapshot):
-            self.assertEqual(check_answer(case, answer), [])
+            for caveat in (
+                "They are not directly comparable.",
+                "They cannot be compared without an exchange rate.",
+                "You can't compare them without an exchange rate.",
+                "They can't compare these before considering the exchange rate.",
+                "They should not be compared before an exchange rate is applied.",
+                "They are in different currencies.",
+                "They need a common currency.",
+            ):
+                with self.subTest(caveat=caveat):
+                    self.assertEqual(
+                        check_answer(case, answer.split("They cannot be compared")[0] + caveat),
+                        [],
+                    )
             self.assertTrue(check_answer(case, answer.replace("INR", "USD")))
             self.assertTrue(check_answer(case, answer + " Cash is larger than market cap."))
             self.assertTrue(check_answer(case, answer + " The cash-to-market-cap ratio is 2."))
@@ -110,13 +182,33 @@ class TestEvalCaseSelection(unittest.TestCase):
             case for case in eval_module.CASES
             if case["id"] == "india_it_companies_by_cash"
         )
-        self.assertEqual(
-            check_answer(case, "- Infosys — USD 3,124,000,000\n- TCS — INR 12,000 crore"),
-            [],
+        valid_answers = (
+            "- TCS — ₹12,000 crore\nUSD-reporting companies are ranked separately.",
+            "- TCS — 12,000 crore INR\nUSD-reporting companies are ranked separately.",
+            "- Infosys — USD 3 billion\nUSD reporters are not included in this INR ranking.",
+            "- Infosys — $3,124 million\nCompanies reporting in USD are ranked separately.",
+            "- One 97 Communications — ₹12,000 crore\nUSD-reporting companies are ranked separately.",
         )
-        self.assertTrue(
-            check_answer(case, "- Infosys — USD 3,124,000,000\n- TCS — 12,000 crore")
+        for answer in valid_answers:
+            with self.subTest(answer=answer):
+                self.assertEqual(check_answer(case, answer), [])
+        bare_figure = check_answer(
+            case,
+            "- TCS — 12,000 crore\nUSD-reporting companies are ranked separately.",
         )
+        self.assertTrue(any("no currency label" in issue for issue in bare_figure))
+        silent_omission = check_answer(case, "- TCS — ₹12,000 crore")
+        self.assertTrue(any("USD-reporting companies" in issue for issue in silent_omission))
+        self.assertTrue(check_answer(
+            case,
+            "- Infosys — USD 3 billion\n- TCS — ₹12,000 crore\n"
+            "USD-reporting companies are ranked separately.",
+        ))
+        self.assertTrue(check_answer(
+            case,
+            "- TCS — ₹12,000 crore\n- Infosys — $3 billion\n"
+            "USD-reporting companies are ranked separately.",
+        ))
 
 
 if __name__ == "__main__":

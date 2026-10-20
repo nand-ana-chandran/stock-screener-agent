@@ -575,7 +575,9 @@ def india_screener(
         JSON containing snapshot_date, total_matches, excluded_missing_data, and rows.
         Money fields carry their quote or financial currency labels. If a requested
         sector or industry returns no matches, the response includes the valid values
-        present in the snapshot.
+        present in the snapshot. When cash or debt sorting matches multiple financial
+        currencies, currency_groups and note report the per-currency counts and explain
+        that rows are ranked only within each currency.
     """
     if sort_by not in INDIA_SORT_FIELDS:
         return f"Unknown sort_by '{sort_by}'. Valid options: {', '.join(INDIA_SORT_FIELDS)}"
@@ -649,8 +651,10 @@ def india_screener(
             and (quote_currency or "").upper() != "INR"
         ):
             values["market_cap"] = None
-        missing = any(
-            values[field] is None
+        missing_fields = {
+            field
+            for field in required_fields
+            if values[field] is None
             or (
                 field in {
                     "market_cap", "trailing_pe", "profit_margin",
@@ -669,11 +673,7 @@ def india_screener(
                 field == "financial_currency"
                 and not isinstance(values[field], str)
             )
-            for field in required_fields
-        )
-        if missing:
-            excluded_missing_data += 1
-            continue
+        }
 
         market_cap_crore = (
             values["market_cap"] / RUPEES_PER_CRORE
@@ -691,28 +691,60 @@ def india_screener(
             if values["revenue_growth"] is not None
             else None
         )
-        if min_market_cap_crore is not None and market_cap_crore < min_market_cap_crore:
+        if (
+            "market_cap" not in missing_fields
+            and min_market_cap_crore is not None
+            and market_cap_crore < min_market_cap_crore
+        ):
             continue
-        if max_market_cap_crore is not None and market_cap_crore > max_market_cap_crore:
+        if (
+            "market_cap" not in missing_fields
+            and max_market_cap_crore is not None
+            and market_cap_crore > max_market_cap_crore
+        ):
             continue
-        if sector_filter is not None and sector_filter.casefold() not in values["sector"].casefold():
+        if (
+            "sector" not in missing_fields
+            and sector_filter is not None
+            and sector_filter.casefold() not in values["sector"].casefold()
+        ):
             continue
-        if industry_filter is not None and industry_filter.casefold() not in values["industry"].casefold():
+        if (
+            "industry" not in missing_fields
+            and industry_filter is not None
+            and industry_filter.casefold() not in values["industry"].casefold()
+        ):
             continue
-        if name_filter is not None:
+        if name_filter is not None and "name" not in missing_fields:
             company = values["name"]
-            if not isinstance(company, str):
-                excluded_missing_data += 1
-                continue
             if name_filter not in company.casefold():
                 continue
-        if min_trailing_pe is not None and values["trailing_pe"] < min_trailing_pe:
+        if (
+            "trailing_pe" not in missing_fields
+            and min_trailing_pe is not None
+            and values["trailing_pe"] < min_trailing_pe
+        ):
             continue
-        if max_trailing_pe is not None and values["trailing_pe"] > max_trailing_pe:
+        if (
+            "trailing_pe" not in missing_fields
+            and max_trailing_pe is not None
+            and values["trailing_pe"] > max_trailing_pe
+        ):
             continue
-        if min_profit_margin is not None and profit_margin_pct < min_profit_margin:
+        if (
+            "profit_margin" not in missing_fields
+            and min_profit_margin is not None
+            and profit_margin_pct < min_profit_margin
+        ):
             continue
-        if min_revenue_growth is not None and revenue_growth_pct < min_revenue_growth:
+        if (
+            "revenue_growth" not in missing_fields
+            and min_revenue_growth is not None
+            and revenue_growth_pct < min_revenue_growth
+        ):
+            continue
+        if missing_fields:
+            excluded_missing_data += 1
             continue
 
         record_for_sort = {
@@ -784,6 +816,21 @@ def india_screener(
             "Sorted within each financial currency; amounts in different currencies "
             "are not compared."
         )
+        if len(currency_groups) > 1:
+            group_counts = {
+                currency: len(group)
+                for currency, group in sorted(currency_groups.items())
+            }
+            response["currency_groups"] = group_counts
+            response["note"] = (
+                "Rows are ranked within each currency only; other currencies among "
+                "the matches: "
+                + ", ".join(
+                    f"{currency} ({count})"
+                    for currency, count in group_counts.items()
+                )
+                + "."
+            )
     if total_matches == 0 and (sector_filter is not None or industry_filter is not None):
         response["available_sectors"] = sorted({
             record["sector"]

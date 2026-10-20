@@ -113,7 +113,7 @@ class TestIndiaScreener(unittest.TestCase):
 
         self.assertEqual(result["snapshot_date"], "2026-10-20")
         self.assertEqual(result["total_matches"], 1)
-        self.assertEqual(result["excluded_missing_data"], 4)
+        self.assertEqual(result["excluded_missing_data"], 3)
         self.assertEqual(len(result["rows"]), 1)
         row = result["rows"][0]
         self.assertEqual(row["symbol"], "AAA.NS")
@@ -137,7 +137,7 @@ class TestIndiaScreener(unittest.TestCase):
         })
 
         self.assertEqual(result["total_matches"], 1)
-        self.assertEqual(result["excluded_missing_data"], 4)
+        self.assertEqual(result["excluded_missing_data"], 3)
         self.assertEqual([row["symbol"] for row in result["rows"]], ["AAA.NS"])
 
     def test_sort_and_offset_return_correct_page(self):
@@ -250,6 +250,16 @@ class TestIndiaScreener(unittest.TestCase):
                     **SNAPSHOT["tickers"]["BBB.NS"],
                     "industry": "Banks - Regional",
                 },
+                "CCC.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "sector": "Healthcare",
+                    "industry": "Pharma Retail",
+                },
+                "DDD.NS": {
+                    **SNAPSHOT["tickers"]["BBB.NS"],
+                    "sector": "Healthcare",
+                    "industry": "Banking Services",
+                },
             },
         }
         it_result = self._invoke({"sector": "it"}, snapshot)
@@ -257,6 +267,11 @@ class TestIndiaScreener(unittest.TestCase):
 
         pharma_result = self._invoke({"industry": "PhArMa"}, snapshot)
         self.assertEqual([row["symbol"] for row in pharma_result["rows"]], ["AAA.NS"])
+        pharma_sector_alias = self._invoke({"sector": "PHARMA"}, snapshot)
+        self.assertEqual(
+            [row["symbol"] for row in pharma_sector_alias["rows"]],
+            ["AAA.NS"],
+        )
 
         banks_result = self._invoke({"industry": "banks"}, snapshot)
         self.assertEqual([row["symbol"] for row in banks_result["rows"]], ["BBB.NS"])
@@ -266,10 +281,46 @@ class TestIndiaScreener(unittest.TestCase):
                 "sort_by": sort_by,
                 "sort_order": "desc",
                 "sector": "Technology",
+                "limit": 1,
             }, snapshot)
             self.assertEqual(result["total_matches"], 2)
+            self.assertEqual(len(result["rows"]), 1)
             self.assertIn("within each financial currency", result["sort_note"])
             self.assertTrue(all(row[sort_by] is not None for row in result["rows"]))
+            self.assertEqual(result["currency_groups"], {"INR": 1, "USD": 1})
+            self.assertIn("INR (1)", result["note"])
+            self.assertIn("USD (1)", result["note"])
+            self.assertIn("within each currency only", result["note"])
+
+    def test_missing_data_count_excludes_rows_filtered_out_by_other_fields(self):
+        snapshot = {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "OTHER.NS": {
+                    "status": "partial",
+                    "industry": "Software",
+                    "revenue_growth": None,
+                    "market_cap": 2_000_000_000,
+                    "quote_currency": "INR",
+                },
+                "DRUG.NS": {
+                    "status": "ok",
+                    "industry": "Drug Manufacturers",
+                    "revenue_growth": 0.2,
+                    "market_cap": 3_000_000_000,
+                    "quote_currency": "INR",
+                },
+            },
+        }
+        result = self._invoke({
+            "industry": "Drug",
+            "min_revenue_growth": 10,
+            "sort_by": "market_cap",
+        }, snapshot)
+
+        self.assertEqual(result["excluded_missing_data"], 0)
+        self.assertEqual(result["total_matches"], 1)
+        self.assertEqual([row["symbol"] for row in result["rows"]], ["DRUG.NS"])
 
 
 if __name__ == "__main__":

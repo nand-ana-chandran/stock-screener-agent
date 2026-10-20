@@ -23,6 +23,9 @@ class TestIndiaRoutingGuidance(unittest.TestCase):
         self.assertIn("us adr", prompt)
         self.assertIn("infy or hdb", prompt)
         self.assertIn("rupee question", prompt)
+        self.assertIn("rows reporting in other currencies are not ranked in this ranking", prompt)
+        self.assertIn("currency group and its count", prompt)
+        self.assertIn("never merge those groups into one ranking", prompt)
 
     def test_tool_descriptions_distinguish_india_from_us_tools(self):
         india_description = india_screener.description.casefold()
