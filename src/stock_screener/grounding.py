@@ -1,3 +1,4 @@
+import json
 import re
 
 
@@ -24,7 +25,7 @@ SUFFIX_MULTIPLIERS = {
 TIME_HYPHEN_PATTERN = re.compile(r"-(?:week|day|month|year)s?\b", re.IGNORECASE)
 
 
-def _extract_numbers(text):
+def _extract_numbers(text, ignored_spans=()):
     for match in NUMBER_PATTERN.finditer(text):
         token = match.group().strip()
         value_text = token.replace("$", "").replace("₹", "").replace(",", "")
@@ -52,6 +53,10 @@ def _extract_numbers(text):
         )
         year = value.is_integer() and 1990 <= value <= 2100
         time_hyphen_unit = TIME_HYPHEN_PATTERN.match(text[match.end():]) is not None
+        part_of_company_name = any(
+            match.start() < end and start < match.end()
+            for start, end in ignored_spans
+        )
         line_start = text.rfind("\n", 0, match.start()) + 1
         ordered_list_marker = (
             not text[line_start:match.start()].strip()
@@ -63,9 +68,53 @@ def _extract_numbers(text):
             "start": match.start(),
             "end": match.end(),
             "ignored": (
-                bare_small_integer or year or time_hyphen_unit or ordered_list_marker
+                bare_small_integer
+                or year
+                or time_hyphen_unit
+                or ordered_list_marker
+                or part_of_company_name
             ),
         }
+
+
+def _numeric_company_names(value, key=None):
+    names = []
+    if isinstance(value, dict):
+        for child_key, child in value.items():
+            names.extend(_numeric_company_names(child, child_key))
+    elif isinstance(value, list):
+        for child in value:
+            names.extend(_numeric_company_names(child, key))
+    elif (
+        isinstance(value, str)
+        and key
+        and key.casefold() in {"name", "company_name", "longname", "shortname"}
+        and re.search(r"\d", value)
+    ):
+        names.append(value)
+    return names
+
+
+def _company_name_number_spans(text, tool_outputs):
+    names = set()
+    for output in tool_outputs:
+        try:
+            parsed = json.loads(_as_text(output))
+        except (TypeError, ValueError):
+            continue
+        names.update(_numeric_company_names(parsed))
+
+    spans = []
+    for name in names:
+        words = name.split()
+        if not words:
+            continue
+        pattern = re.compile(
+            r"(?<!\w)" + r"\s+".join(re.escape(word) for word in words) + r"(?!\w)",
+            re.IGNORECASE,
+        )
+        spans.extend(match.span() for match in pattern.finditer(text))
+    return spans
 
 
 def _as_text(value):
@@ -83,7 +132,9 @@ def _is_grounded(value, allowed_values):
 
 
 def check_grounding(final_text, tool_outputs, prompt, tool_call_args=None):
-    answer_numbers = list(_extract_numbers(final_text))
+    answer_numbers = list(
+        _extract_numbers(final_text, _company_name_number_spans(final_text, tool_outputs))
+    )
     allowed_values = [
         number["value"]
         for output in tool_outputs

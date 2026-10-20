@@ -21,6 +21,7 @@ REQUEST_DELAY_SECONDS = 0.5
 SNAPSHOT_REPLACE_RETRIES = 5
 SNAPSHOT_REPLACE_BACKOFF_SECONDS = 0.1
 FIELDS = {
+    "name": ("longName", "shortName"),
     "price": ("regularMarketPrice", "currentPrice"),
     "market_cap": ("marketCap",),
     "trailing_pe": ("trailingPE",),
@@ -33,7 +34,10 @@ FIELDS = {
     "quote_currency": ("currency",),
     "financial_currency": ("financialCurrency",),
 }
-REQUIRED_FIELDS = tuple(FIELDS) + ("fifty_two_week_low", "fifty_two_week_high")
+REQUIRED_FIELDS = tuple(field for field in FIELDS if field != "name") + (
+    "fifty_two_week_low",
+    "fifty_two_week_high",
+)
 
 
 class _Suppress404Filter(logging.Filter):

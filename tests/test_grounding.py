@@ -108,4 +108,18 @@ result = check_grounding(
 )
 assert [item["text"] for item in result["ungrounded"]] == ["99.9%"]
 
+result = check_grounding(
+    "One 97 Communications has a market cap of ₹1,62,660 crore",
+    ['{"name": "One 97 Communications", "market_cap": "₹1,62,660 crore"}'],
+    "",
+)
+assert result["ungrounded"] == []
+
+result = check_grounding(
+    "One 97 Communications has a market cap of ₹1,70,000 crore",
+    ['{"name": "One 97 Communications", "market_cap": "₹1,62,660 crore"}'],
+    "",
+)
+assert [item["text"] for item in result["ungrounded"]] == ["₹1,70,000 crore"]
+
 print("All grounding tests passed.")

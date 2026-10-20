@@ -85,9 +85,9 @@ SNAPSHOT = {
 
 
 class TestIndiaScreener(unittest.TestCase):
-    def _invoke(self, args):
+    def _invoke(self, args, snapshot=SNAPSHOT):
         with (
-            patch("stock_screener.tool.load_snapshot", return_value=SNAPSHOT),
+            patch("stock_screener.tool.load_snapshot", return_value=snapshot),
             patch(
                 "stock_screener.tool.yf.Ticker",
                 side_effect=AssertionError("India screener must not use network"),
@@ -201,6 +201,75 @@ class TestIndiaScreener(unittest.TestCase):
         self.assertIn("Technology", result["available_sectors"])
         self.assertIn("Software", result["available_industries"])
         self.assertNotIn("Pharmaceuticals", result["available_sectors"])
+
+    def test_symbol_and_company_name_filters_find_infosys_with_currencies(self):
+        infy = {
+            "status": "ok",
+            "name": "Infosys Limited",
+            "market_cap": 4_579_723_313_152,
+            "price": 1_130.7,
+            "trailing_pe": 15.4,
+            "sector": "Technology",
+            "industry": "Information Technology Services",
+            "total_cash": 3_124_000_000,
+            "total_debt": 923_000_000,
+            "quote_currency": "INR",
+            "financial_currency": "USD",
+        }
+        snapshot = {
+            **SNAPSHOT,
+            "tickers": {**SNAPSHOT["tickers"], "INFY.NS": infy},
+        }
+
+        for query in ({"symbol": "infy"}, {"symbol": "INFY.Ns"}, {"company_name": "fosys"}):
+            with self.subTest(query=query):
+                result = self._invoke(query, snapshot)
+                self.assertEqual(result["total_matches"], 1)
+                row = result["rows"][0]
+                self.assertEqual(row["symbol"], "INFY.NS")
+                self.assertEqual(row["quote_currency"], "INR")
+                self.assertEqual(row["financial_currency"], "USD")
+                self.assertTrue(row["market_cap"].startswith("₹"))
+                self.assertTrue(row["total_cash"].startswith("USD "))
+
+    def test_unknown_symbol_returns_no_rows(self):
+        result = self._invoke({"symbol": "NOTREAL"})
+        self.assertEqual(result["total_matches"], 0)
+        self.assertEqual(result["rows"], [])
+
+    def test_sector_industry_aliases_and_cash_debt_sorts(self):
+        snapshot = {
+            **SNAPSHOT,
+            "tickers": {
+                **SNAPSHOT["tickers"],
+                "AAA.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "industry": "Drug Manufacturers - Specialty & Generic",
+                },
+                "BBB.NS": {
+                    **SNAPSHOT["tickers"]["BBB.NS"],
+                    "industry": "Banks - Regional",
+                },
+            },
+        }
+        it_result = self._invoke({"sector": "it"}, snapshot)
+        self.assertEqual(it_result["total_matches"], 3)
+
+        pharma_result = self._invoke({"industry": "PhArMa"}, snapshot)
+        self.assertEqual([row["symbol"] for row in pharma_result["rows"]], ["AAA.NS"])
+
+        banks_result = self._invoke({"industry": "banks"}, snapshot)
+        self.assertEqual([row["symbol"] for row in banks_result["rows"]], ["BBB.NS"])
+
+        for sort_by in ("total_cash", "total_debt"):
+            result = self._invoke({
+                "sort_by": sort_by,
+                "sort_order": "desc",
+                "sector": "Technology",
+            }, snapshot)
+            self.assertEqual(result["total_matches"], 2)
+            self.assertIn("within each financial currency", result["sort_note"])
+            self.assertTrue(all(row[sort_by] is not None for row in result["rows"]))
 
 
 if __name__ == "__main__":
