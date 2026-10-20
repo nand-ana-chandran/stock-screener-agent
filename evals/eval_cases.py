@@ -3,6 +3,8 @@
 # An arg check is a literal (exact match, case-insensitive for strings)
 # or a function that returns True/False.
 import re
+import json
+from datetime import date
 
 from stock_screener.india_data import format_money, get_snapshot_date, load_snapshot
 
@@ -24,14 +26,29 @@ def infosys_snapshot_pattern(field, currency_field):
 
 
 def infosys_snapshot_date_pattern():
-    return re.escape(get_snapshot_date(load_snapshot()))
+    snapshot_date = date.fromisoformat(get_snapshot_date(load_snapshot()))
+    formats = (
+        snapshot_date.isoformat(),
+        snapshot_date.strftime("%d %B %Y"),
+        snapshot_date.strftime("%B %d, %Y"),
+        snapshot_date.strftime("%d-%m-%Y"),
+    )
+    return r"(?:%s)" % "|".join(re.escape(value) for value in formats)
 
 
 def industry_contains(value):
     return lambda actual: isinstance(actual, str) and value.casefold() in actual.casefold()
 
 
-def check_it_cash_answer(answer):
+def industry_is_it(actual):
+    return isinstance(actual, str) and (
+        re.search(r"\bit\b", actual, re.IGNORECASE) is not None
+        or "information technology" in actual.casefold()
+        or "software" in actual.casefold()
+    )
+
+
+def check_it_cash_answer(answer, tool_outputs=None):
     issues = []
     figure_pattern = re.compile(
         r"(?<![\w,])(?P<number>(?:\d{1,2}(?:,\d{2})*,\d{3}|"
@@ -41,11 +58,13 @@ def check_it_cash_answer(answer):
     )
     currency_prefix = re.compile(r"(?:₹|\$|\bUSD)\s*$", re.IGNORECASE)
     currency_suffix = re.compile(
-        r"^\s*(?:[-–—:(]\s*)?(?:INR|USD)\b",
+        r"^\s*(?:[-–—:(]\s*)?(?P<currency>INR|USD)\b",
         re.IGNORECASE,
     )
-    currencies_by_line = {}
+    ranked_currencies = set()
+    list_item = re.compile(r"^\s*(?:[-*•]|\d+[.)])\s*")
     for line_number, line in enumerate(answer.splitlines()):
+        is_ranked_row = list_item.match(line) is not None
         row_currencies = set()
         for match in figure_pattern.finditer(line):
             prefix = line[:match.start("number")]
@@ -59,39 +78,68 @@ def check_it_cash_answer(answer):
                 )
                 continue
             label = (
-                suffix_match.group().strip().upper()
+                suffix_match.group("currency").upper()
                 if suffix_match is not None
                 else ("USD" if re.search(r"\bUSD\b|\$", prefix, re.IGNORECASE) else "INR")
             )
-            row_currencies.add("USD" if label in {"USD", "$"} else "INR")
+            currency = "USD" if label in {"USD", "$"} else "INR"
+            if is_ranked_row:
+                row_currencies.add(currency)
+        if is_ranked_row:
+            ranked_currencies.update(row_currencies)
 
-        row_marker_values = set()
-        if re.match(r"\s*(?:[-*•]|\d+[.)])\s*", line) and re.search(
-            r"\d", line
-        ):
-            if re.search(r"\bUSD\b|\$", line, re.IGNORECASE):
-                row_marker_values.add("USD")
-            if re.search(r"\bINR\b|₹", line, re.IGNORECASE):
-                row_marker_values.add("INR")
-        if row_marker_values or re.match(r"\s*(?:[-*•]|\d+[.)])\s*", line):
-            currencies_by_line[line_number] = row_currencies | row_marker_values
-
-    ranked_currencies = (
-        set().union(*currencies_by_line.values()) if currencies_by_line else set()
-    )
     if ranked_currencies == {"USD", "INR"}:
         issues.append("ranked list mixes USD and INR amounts")
 
-    separate_usd_pattern = re.compile(
-        r"\b(?:USD[- ]reporting companies|companies reporting in USD|USD reporters)\b"
-        r".{0,80}\b(?:ranked separately|not included|excluded)\b",
+    usd_group_pattern = re.compile(
+        r"(?:"
+        r"\b(?:USD(?:[- ]reporting)?[- ]companies|companies reporting in USD|USD reporters|"
+        r"USD group|USD amounts)\b"
+        r"[^\n.]{0,100}\b(?:not ranked|excluded|not included|ranked separately|not compared)\b"
+        r"|"
+        r"\b(?:not ranked|excluded|not included|ranked separately|not compared)\b"
+        r"[^\n.]{0,100}\b(?:USD(?:[- ]reporting)?[- ]companies|companies reporting in USD|"
+        r"USD reporters|USD group|USD amounts)\b"
+        r")",
         re.IGNORECASE,
     )
-    if separate_usd_pattern.search(answer) is None:
+    output_groups = {}
+    for output in tool_outputs or []:
+        try:
+            parsed_output = json.loads(output)
+        except (TypeError, json.JSONDecodeError):
+            continue
+        groups = parsed_output.get("currency_groups")
+        if isinstance(groups, dict):
+            output_groups.update(groups)
+
+    has_multiple_groups = len(output_groups) > 1
+    if has_multiple_groups and usd_group_pattern.search(answer) is None:
         issues.append(
             "answer does not state that USD-reporting companies are ranked separately "
-            "or not included"
+            "or are not ranked, excluded, not included, or not compared"
         )
+    if has_multiple_groups:
+        usd_count = output_groups.get("USD")
+        mentions_usd_group = re.search(
+            r"\bUSD group\b|\bUSD reporters\b|"
+            r"\bUSD(?:[- ]reporting)?[- ]companies\b|"
+            r"\bcompanies reporting in USD\b",
+            answer,
+            re.I,
+        )
+        mentions_count = (
+            usd_count is not None
+            and re.search(
+                rf"\bUSD\b.{{0,20}}\b{usd_count}\b|\b{usd_count}\b.{{0,20}}\bUSD\b",
+                answer,
+                re.IGNORECASE,
+            )
+        )
+        if not mentions_usd_group and not mentions_count:
+            issues.append(
+                f"answer does not mention the USD group or its count ({usd_count})"
+            )
     return issues
 
 
@@ -255,16 +303,20 @@ CASES = [
      "answer_must_not_match": [
          r"(?i)\b(?:cash[- ]to[- ]market[- ]cap|cash/market[- ]cap)\s+ratio\b",
          r"(?i)(?:cash|market cap).{0,40}(?:larger|higher|greater|exceeds|more than).{0,40}(?:cash|market cap)",
-         r"(?i)(?:market cap[^.\n]{0,50}USD\s*[\d,]|USD\s*[\d,][^.\n]{0,50}market cap)",
+         r"(?i)market cap\W{0,6}(?:is\s+)?USD",
      ]},
     {"id": "india_it_companies_by_cash", "turns": [
         {"prompt": "Which Nifty 500 IT companies have the most cash? Rank by total cash if "
                    "supported, and label the currency for every row.",
          "calls": [{"tool": "india_screener", "args": {
-             "sector": "Technology", "sort_by": "total_cash",
-             "sort_order": "desc"}}]}],
-     "answer_must_not_match": [
-     ],
+             "sort_by": "total_cash",
+             "sort_order": "desc"},
+             "any_args": [
+                 {"industry": industry_is_it},
+                 {"sector": lambda value: isinstance(value, str)
+                 and value.casefold() == "technology"},
+             ]}]}],
+     "tool_call_limits": {"india_screener": {"min": 1, "max": 2}},
      "answer_checks": [check_it_cash_answer]},
 
     # --- US routing regression: India tool must not be used ---

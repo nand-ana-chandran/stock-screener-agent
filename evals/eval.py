@@ -140,7 +140,7 @@ def check_turn(expected_calls, actual_calls, tool_call_limits=None):
     return True, not reasons, reasons
 
 
-def check_answer(case, answer):
+def check_answer(case, answer, tool_outputs=None):
     reasons = []
     for pattern in case.get("answer_must_include", []):
         if callable(pattern):
@@ -153,7 +153,7 @@ def check_answer(case, answer):
         if re.search(pattern, answer, re.IGNORECASE | re.MULTILINE):
             reasons.append(f"answer matched forbidden pattern: {pattern}")
     for check in case.get("answer_checks", []):
-        reasons.extend(check(answer))
+        reasons.extend(check(answer, tool_outputs or []))
     return reasons
 
 
@@ -174,7 +174,11 @@ def run_case(case, rep):
                 tools_ok, args_ok, reasons = check_turn(
                     turn["calls"], actual, case.get("tool_call_limits")
                 )
-                answer_reasons = check_answer(case, turn_result["final_text"])
+                answer_reasons = check_answer(
+                    case,
+                    turn_result["final_text"],
+                    turn_result["tool_outputs"],
+                )
                 reasons.extend(answer_reasons)
                 tool_call_args = [call["args"] for call in actual]
                 rec.update(status="pass" if tools_ok and args_ok and not reasons else "fail",
