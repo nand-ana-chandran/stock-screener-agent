@@ -533,6 +533,7 @@ def india_screener(
     max_market_cap_crore: float | None = None,
     sector: str | None = None,
     industry: str | None = None,
+    financial_currency: str | None = None,
     min_trailing_pe: float | None = None,
     max_trailing_pe: float | None = None,
     min_profit_margin: float | None = None,
@@ -550,17 +551,22 @@ def india_screener(
     the US screeners. Real sector values include Technology, Healthcare,
     Financial Services, Consumer Cyclical, Consumer Defensive, Industrials,
     Energy, Utilities, Real Estate, Basic Materials, and Communication Services.
-    Common sector filters include IT for Technology. Industry filters include
-    Banks and Drug Manufacturers (pharma).
+    For "IT companies", "IT sector", or "IT services" requests, pass industry="IT".
+    This covers Information Technology Services and software industries, including
+    TCS, Infosys, Wipro, and HCLTech. "software" alone covers software industries
+    only. Use sector="Technology" for "tech" or "technology".
 
     Args:
         symbol: Optional NSE symbol with or without .NS, matched case-insensitively.
         company_name: Optional case-insensitive substring of the company name.
         min_market_cap_crore: Optional minimum market cap in INR crore.
         max_market_cap_crore: Optional maximum market cap in INR crore.
-        sector: Optional case-insensitive sector substring; IT means Technology.
-        industry: Optional case-insensitive industry substring; pharma means Drug
-            Manufacturers and banks means Banks.
+        sector: Optional sector substring; "tech"/"technology" means Technology.
+        industry: Optional case-insensitive industry substring; pass "IT" for IT
+            companies/sector/services (IT services and software), "software" for
+            software industries only, pharma for Drug Manufacturers, and banks
+            for Banks.
+        financial_currency: Optional financial statement currency, INR or USD.
         min_trailing_pe: Optional minimum trailing P/E.
         max_trailing_pe: Optional maximum trailing P/E.
         min_profit_margin: Optional minimum profit margin in percentage points (10 means 10%).
@@ -577,7 +583,8 @@ def india_screener(
         sector or industry returns no matches, the response includes the valid values
         present in the snapshot. When cash or debt sorting matches multiple financial
         currencies, currency_groups and note report the per-currency counts and explain
-        that rows are ranked only within each currency.
+        that rows are ranked only within each currency; the note directs the caller to
+        use financial_currency to view another group.
     """
     if sort_by not in INDIA_SORT_FIELDS:
         return f"Unknown sort_by '{sort_by}'. Valid options: {', '.join(INDIA_SORT_FIELDS)}"
@@ -589,18 +596,28 @@ def india_screener(
         return "offset must be zero or greater."
     sector_filter = sector.strip() if sector else None
     industry_filter = industry.strip() if industry else None
-    if sector_filter and sector_filter.casefold() == "it":
-        sector_filter = "Technology"
+    it_aliases = {"it", "it companies", "it services", "it services companies"}
+    it_industry_filter = False
+    if sector_filter and sector_filter.casefold() in it_aliases:
+        sector_filter = None
+        it_industry_filter = True
     elif sector_filter and sector_filter.casefold() == "pharma":
         sector_filter = None
         industry_filter = "Drug Manufacturers"
     elif sector_filter and sector_filter.casefold() == "banks":
         sector_filter = None
         industry_filter = "Banks"
-    if industry_filter and industry_filter.casefold() == "pharma":
+    if industry_filter and industry_filter.casefold() in it_aliases:
+        industry_filter = None
+        it_industry_filter = True
+    elif industry_filter and industry_filter.casefold() == "pharma":
         industry_filter = "Drug Manufacturers"
     elif industry_filter and industry_filter.casefold() == "banks":
         industry_filter = "Banks"
+    if financial_currency is not None:
+        financial_currency = financial_currency.strip().upper()
+        if financial_currency not in {"INR", "USD"}:
+            return "financial_currency must be 'INR' or 'USD'."
     normalized_symbol = symbol.strip().upper() if symbol else None
     if normalized_symbol:
         normalized_symbol = normalized_symbol.removesuffix(".NS")
@@ -613,9 +630,13 @@ def india_screener(
         return "India snapshot is unavailable. Build it with scripts/refresh_india.py."
     tickers = snapshot.get("tickers", {})
     requested_filters = {
-        "market_cap": min_market_cap_crore is not None or max_market_cap_crore is not None,
+        "market_cap": (
+            (min_market_cap_crore is not None and min_market_cap_crore > 0)
+            or max_market_cap_crore is not None
+        ),
         "sector": sector_filter is not None,
-        "industry": industry_filter is not None,
+        "industry": industry_filter is not None or it_industry_filter,
+        "financial_currency": financial_currency is not None,
         "trailing_pe": min_trailing_pe is not None or max_trailing_pe is not None,
         "profit_margin": min_profit_margin is not None,
         "revenue_growth": min_revenue_growth is not None,
@@ -694,6 +715,7 @@ def india_screener(
         if (
             "market_cap" not in missing_fields
             and min_market_cap_crore is not None
+            and min_market_cap_crore > 0
             and market_cap_crore < min_market_cap_crore
         ):
             continue
@@ -715,6 +737,13 @@ def india_screener(
             and industry_filter.casefold() not in values["industry"].casefold()
         ):
             continue
+        if "industry" not in missing_fields and it_industry_filter:
+            industry_value = values["industry"].casefold()
+            if not (
+                industry_value == "information technology services"
+                or industry_value.startswith("software")
+            ):
+                continue
         if name_filter is not None and "name" not in missing_fields:
             company = values["name"]
             if name_filter not in company.casefold():
@@ -741,6 +770,12 @@ def india_screener(
             "revenue_growth" not in missing_fields
             and min_revenue_growth is not None
             and revenue_growth_pct < min_revenue_growth
+        ):
+            continue
+        if (
+            "financial_currency" not in missing_fields
+            and financial_currency is not None
+            and values["financial_currency"].upper() != financial_currency
         ):
             continue
         if missing_fields:
@@ -822,14 +857,32 @@ def india_screener(
                 for currency, group in sorted(currency_groups.items())
             }
             response["currency_groups"] = group_counts
+            ranked_currency = "INR" if "INR" in currency_groups else next(
+                iter(sorted(currency_groups))
+            )
+            excluded_groups = [
+                (currency, group)
+                for currency, group in sorted(currency_groups.items())
+                if currency != ranked_currency
+            ]
+            excluded_descriptions = []
+            for currency, group in excluded_groups:
+                description = f"{currency} ({len(group)})"
+                if len(group) <= 5:
+                    symbols = ", ".join(match[0] for match in group)
+                    description += f": {symbols}"
+                excluded_descriptions.append(description)
             response["note"] = (
-                "Rows are ranked within each currency only; other currencies among "
-                "the matches: "
-                + ", ".join(
-                    f"{currency} ({count})"
-                    for currency, count in group_counts.items()
+                f"Rows reporting in {ranked_currency} ({len(currency_groups[ranked_currency])}) "
+                "are ranked within that currency "
+                "only. Rows in other currency groups are excluded from this ranking: "
+                + "; ".join(excluded_descriptions)
+                + ". Use "
+                + " or ".join(
+                    f'financial_currency="{currency}"'
+                    for currency, _ in excluded_groups
                 )
-                + "."
+                + " to see those groups."
             )
     if total_matches == 0 and (sector_filter is not None or industry_filter is not None):
         response["available_sectors"] = sorted({

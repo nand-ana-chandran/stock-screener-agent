@@ -126,6 +126,30 @@ class TestIndiaScreener(unittest.TestCase):
         self.assertEqual(row["quote_currency"], "INR")
         self.assertEqual(row["financial_currency"], "USD")
 
+    def test_financial_currency_filter_selects_only_requested_reporters(self):
+        inr = self._invoke({
+            "financial_currency": "inr",
+            "sort_by": "total_cash",
+            "sort_order": "desc",
+        })
+        self.assertEqual(
+            [row["symbol"] for row in inr["rows"]],
+            ["BBB.NS"],
+        )
+        self.assertEqual(inr["total_matches"], 1)
+        self.assertNotIn("currency_groups", inr)
+
+        usd = self._invoke({
+            "financial_currency": "USD",
+            "sort_by": "total_cash",
+        })
+        self.assertEqual([row["symbol"] for row in usd["rows"]], ["AAA.NS"])
+        self.assertEqual(usd["rows"][0]["financial_currency"], "USD")
+
+        with patch("stock_screener.tool.load_snapshot", return_value=SNAPSHOT):
+            invalid = india_screener.invoke({"financial_currency": "EUR"})
+        self.assertEqual(invalid, "financial_currency must be 'INR' or 'USD'.")
+
     def test_null_filter_values_are_excluded_not_zero(self):
         result = self._invoke({
             "sector": "Technology",
@@ -238,6 +262,28 @@ class TestIndiaScreener(unittest.TestCase):
         self.assertEqual(result["rows"], [])
 
     def test_sector_industry_aliases_and_cash_debt_sorts(self):
+        it_services = {
+            **SNAPSHOT["tickers"]["AAA.NS"],
+            "industry": "Information Technology Services",
+        }
+        waaree = {
+            **SNAPSHOT["tickers"]["AAA.NS"],
+            "name": "Waaree Energies",
+            "industry": "Solar",
+        }
+        lg_electronics = {
+            **SNAPSHOT["tickers"]["AAA.NS"],
+            "name": "LG Electronics India",
+            "industry": "Consumer Electronics",
+        }
+        software_application = {
+            **SNAPSHOT["tickers"]["AAA.NS"],
+            "industry": "Software - Application",
+        }
+        software_infrastructure = {
+            **SNAPSHOT["tickers"]["BBB.NS"],
+            "industry": "Software - Infrastructure",
+        }
         snapshot = {
             **SNAPSHOT,
             "tickers": {
@@ -260,10 +306,53 @@ class TestIndiaScreener(unittest.TestCase):
                     "sector": "Healthcare",
                     "industry": "Banking Services",
                 },
+                "WAREE.NS": waaree,
+                "LGE.NS": lg_electronics,
+                "ITSVCS.NS": it_services,
+                "SOFTAPP.NS": software_application,
+                "SOFTINF.NS": software_infrastructure,
             },
         }
-        it_result = self._invoke({"sector": "it"}, snapshot)
-        self.assertEqual(it_result["total_matches"], 3)
+        it_result = self._invoke({"sector": "IT"}, snapshot)
+        it_symbols = {row["symbol"] for row in it_result["rows"]}
+        self.assertEqual(it_symbols, {"ITSVCS.NS", "SOFTAPP.NS", "SOFTINF.NS"})
+        self.assertIn("ITSVCS.NS", it_symbols)
+        self.assertIn("SOFTAPP.NS", it_symbols)
+        self.assertIn("SOFTINF.NS", it_symbols)
+        self.assertNotIn("WAREE.NS", it_symbols)
+        self.assertNotIn("LGE.NS", it_symbols)
+        combined_it_result = self._invoke({
+            "industry": "IT",
+            "sector": "Technology",
+        }, snapshot)
+        self.assertEqual(
+            {row["symbol"] for row in combined_it_result["rows"]},
+            it_symbols,
+        )
+        software_only = self._invoke({"industry": "software"}, snapshot)
+        self.assertEqual(
+            {row["symbol"] for row in software_only["rows"]},
+            {"SOFTAPP.NS", "SOFTINF.NS"},
+        )
+        for alias in ("IT", "IT companies", "IT services"):
+            result = self._invoke({"industry": alias}, snapshot)
+            industries = {row["industry"] for row in result["rows"]}
+            self.assertTrue(
+                industries
+                <= {
+                    "Information Technology Services",
+                    "Software - Application",
+                    "Software - Infrastructure",
+                }
+            )
+            self.assertTrue(industries)
+            self.assertEqual(
+                {row["symbol"] for row in result["rows"]},
+                {"ITSVCS.NS", "SOFTAPP.NS", "SOFTINF.NS"},
+            )
+        tech_result = self._invoke({"sector": "technology"}, snapshot)
+        self.assertIn("WAREE.NS", [row["symbol"] for row in tech_result["rows"]])
+        self.assertIn("LGE.NS", [row["symbol"] for row in tech_result["rows"]])
 
         pharma_result = self._invoke({"industry": "PhArMa"}, snapshot)
         self.assertEqual([row["symbol"] for row in pharma_result["rows"]], ["AAA.NS"])
@@ -276,13 +365,20 @@ class TestIndiaScreener(unittest.TestCase):
         banks_result = self._invoke({"industry": "banks"}, snapshot)
         self.assertEqual([row["symbol"] for row in banks_result["rows"]], ["BBB.NS"])
 
+        sort_snapshot = {
+            **snapshot,
+            "tickers": {
+                "AAA.NS": snapshot["tickers"]["AAA.NS"],
+                "BBB.NS": snapshot["tickers"]["BBB.NS"],
+            },
+        }
         for sort_by in ("total_cash", "total_debt"):
             result = self._invoke({
                 "sort_by": sort_by,
                 "sort_order": "desc",
                 "sector": "Technology",
                 "limit": 1,
-            }, snapshot)
+            }, sort_snapshot)
             self.assertEqual(result["total_matches"], 2)
             self.assertEqual(len(result["rows"]), 1)
             self.assertIn("within each financial currency", result["sort_note"])
@@ -290,7 +386,54 @@ class TestIndiaScreener(unittest.TestCase):
             self.assertEqual(result["currency_groups"], {"INR": 1, "USD": 1})
             self.assertIn("INR (1)", result["note"])
             self.assertIn("USD (1)", result["note"])
-            self.assertIn("within each currency only", result["note"])
+            self.assertIn("within that currency only", result["note"])
+            self.assertIn("USD (1): AAA.NS", result["note"])
+            self.assertIn('financial_currency="USD"', result["note"])
+            self.assertIn("excluded from this ranking", result["note"])
+
+    def test_currency_note_lists_non_ranked_symbols_for_small_groups(self):
+        snapshot = {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "INRCO.NS": {
+                    **SNAPSHOT["tickers"]["BBB.NS"],
+                    "financial_currency": "INR",
+                },
+                "USDONE.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "financial_currency": "USD",
+                },
+                "USDTWO.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "financial_currency": "USD",
+                },
+            },
+        }
+        result = self._invoke({"sort_by": "total_cash"}, snapshot)
+        self.assertEqual(result["currency_groups"], {"INR": 1, "USD": 2})
+        self.assertIn("USD (2): USDONE.NS, USDTWO.NS", result["note"])
+        self.assertIn("excluded from this ranking", result["note"])
+        self.assertIn('financial_currency="USD"', result["note"])
+
+    def test_currency_note_omits_symbol_list_for_groups_over_five(self):
+        tickers = {
+            "INRCO.NS": {
+                **SNAPSHOT["tickers"]["BBB.NS"],
+                "financial_currency": "INR",
+            },
+        }
+        for index in range(6):
+            tickers[f"USD{index}.NS"] = {
+                **SNAPSHOT["tickers"]["AAA.NS"],
+                "financial_currency": "USD",
+            }
+        result = self._invoke({"sort_by": "total_cash"}, {
+            "snapshot_date": "2026-10-20",
+            "tickers": tickers,
+        })
+        self.assertEqual(result["currency_groups"], {"INR": 1, "USD": 6})
+        self.assertIn("USD (6)", result["note"])
+        self.assertNotIn("USD (6):", result["note"])
 
     def test_missing_data_count_excludes_rows_filtered_out_by_other_fields(self):
         snapshot = {
@@ -321,6 +464,38 @@ class TestIndiaScreener(unittest.TestCase):
         self.assertEqual(result["excluded_missing_data"], 0)
         self.assertEqual(result["total_matches"], 1)
         self.assertEqual([row["symbol"] for row in result["rows"]], ["DRUG.NS"])
+
+    def test_zero_market_cap_lower_bound_does_not_change_missing_count(self):
+        snapshot = {
+            **SNAPSHOT,
+            "tickers": {
+                **SNAPSHOT["tickers"],
+                "NOMCAP.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "market_cap": None,
+                    "industry": "Software",
+                    "price": 110.0,
+                },
+            },
+        }
+        no_lower_bound = self._invoke({
+            "industry": "Software",
+            "sort_by": "price",
+        }, snapshot)
+        zero_lower_bound = self._invoke({
+            "industry": "Software",
+            "min_market_cap_crore": 0,
+            "sort_by": "price",
+        }, snapshot)
+        self.assertEqual(
+            zero_lower_bound["excluded_missing_data"],
+            no_lower_bound["excluded_missing_data"],
+        )
+        self.assertEqual(
+            [row["symbol"] for row in zero_lower_bound["rows"]],
+            [row["symbol"] for row in no_lower_bound["rows"]],
+        )
+        self.assertIn("NOMCAP.NS", [row["symbol"] for row in no_lower_bound["rows"]])
 
 
 if __name__ == "__main__":

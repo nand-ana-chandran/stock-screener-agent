@@ -1,5 +1,6 @@
 import importlib
 import importlib.util
+import json
 import os
 import unittest
 from pathlib import Path
@@ -141,7 +142,7 @@ class TestEvalCaseSelection(unittest.TestCase):
             "snapshot_date": "2026-10-20",
             "tickers": {
                 "INFY.NS": {
-                    "market_cap": 16_266_000_000_000,
+                    "market_cap": 4_579_723_313_152,
                     "quote_currency": "INR",
                     "total_cash": 1_234_000_000,
                     "financial_currency": "USD",
@@ -149,33 +150,57 @@ class TestEvalCaseSelection(unittest.TestCase):
             },
         }
         infy = snapshot["tickers"]["INFY.NS"]
-        answer = (
-            f"Snapshot date {get_snapshot_date(snapshot)}. "
-            f"Market cap in {infy['quote_currency']}: "
-            f"{format_money(infy['market_cap'], infy['quote_currency'])}. "
-            f"Cash in {infy['financial_currency']}: "
-            f"{format_money(infy['total_cash'], infy['financial_currency'])}. "
-            "They cannot be compared without an exchange rate."
+        market_cap = format_money(infy["market_cap"], infy["quote_currency"])
+        cash = format_money(infy["total_cash"], infy["financial_currency"])
+        self.assertEqual(market_cap, "₹4.58 lakh crore")
+        date_forms = (
+            "2026-10-20",
+            "20 October 2026",
+            "October 20, 2026",
+            "20-10-2026",
         )
         eval_cases = importlib.import_module("eval_cases")
         with patch.object(eval_cases, "load_snapshot", return_value=snapshot):
-            for caveat in (
-                "They are not directly comparable.",
+            for snapshot_date in date_forms:
+                answer = (
+                    f"On {snapshot_date}, market cap is INR {market_cap} and cash is "
+                    f"USD {cash}; these cannot be compared without an exchange rate."
+                )
+                with self.subTest(snapshot_date=snapshot_date):
+                    self.assertEqual(check_answer(case, answer), [])
+
+            bullet_answer = (
+                "- Snapshot date: 20 October 2026\n"
+                f"- Market cap (INR): {market_cap}\n"
+                f"- Cash (USD): {cash}\n"
+                "- They are not directly comparable without a common currency."
+            )
+            self.assertEqual(check_answer(case, bullet_answer), [])
+
+            wrong_currency_answer = (
+                "On October 20, 2026, market cap is USD "
+                f"{market_cap}; cash is USD {cash}. They are in different currencies."
+            )
+            self.assertTrue(check_answer(case, wrong_currency_answer))
+            forbidden_result = check_answer(
+                case,
+                f"On 2026-10-20, Market cap: USD {market_cap}, cash is USD {cash}. "
                 "They cannot be compared without an exchange rate.",
-                "You can't compare them without an exchange rate.",
-                "They can't compare these before considering the exchange rate.",
-                "They should not be compared before an exchange rate is applied.",
-                "They are in different currencies.",
-                "They need a common currency.",
-            ):
-                with self.subTest(caveat=caveat):
-                    self.assertEqual(
-                        check_answer(case, answer.split("They cannot be compared")[0] + caveat),
-                        [],
-                    )
-            self.assertTrue(check_answer(case, answer.replace("INR", "USD")))
-            self.assertTrue(check_answer(case, answer + " Cash is larger than market cap."))
-            self.assertTrue(check_answer(case, answer + " The cash-to-market-cap ratio is 2."))
+            )
+            self.assertTrue(any(
+                "market cap\\W{0,6}(?:is\\s+)?USD" in reason
+                for reason in forbidden_result
+            ))
+            self.assertTrue(check_answer(case, (
+                f"On 2026-10-20, market cap is INR {market_cap} and cash is "
+                f"USD {cash}; they are in different currencies. "
+                "Cash is larger than market cap."
+            )))
+            self.assertTrue(check_answer(case, (
+                f"On 2026-10-20, market cap is INR {market_cap} and cash is "
+                f"USD {cash}; they are in different currencies. "
+                "The cash-to-market-cap ratio is 2."
+            )))
 
     def test_it_cash_answer_checks_currency_on_each_list_row(self):
         case = next(
@@ -189,16 +214,24 @@ class TestEvalCaseSelection(unittest.TestCase):
             "- Infosys — $3,124 million\nCompanies reporting in USD are ranked separately.",
             "- One 97 Communications — ₹12,000 crore\nUSD-reporting companies are ranked separately.",
         )
+        one_currency_output = [json.dumps({"currency_groups": {"INR": 4}})]
         for answer in valid_answers:
             with self.subTest(answer=answer):
-                self.assertEqual(check_answer(case, answer), [])
+                self.assertEqual(
+                    check_answer(case, answer, one_currency_output),
+                    [],
+                )
         bare_figure = check_answer(
             case,
             "- TCS — 12,000 crore\nUSD-reporting companies are ranked separately.",
         )
         self.assertTrue(any("no currency label" in issue for issue in bare_figure))
-        silent_omission = check_answer(case, "- TCS — ₹12,000 crore")
-        self.assertTrue(any("USD-reporting companies" in issue for issue in silent_omission))
+        silent_omission = check_answer(
+            case,
+            "- TCS — ₹12,000 crore",
+            one_currency_output,
+        )
+        self.assertEqual(silent_omission, [])
         self.assertTrue(check_answer(
             case,
             "- Infosys — USD 3 billion\n- TCS — ₹12,000 crore\n"
@@ -209,6 +242,126 @@ class TestEvalCaseSelection(unittest.TestCase):
             "- TCS — ₹12,000 crore\n- Infosys — $3 billion\n"
             "USD-reporting companies are ranked separately.",
         ))
+        for wording in (
+            "USD reporters are not ranked here.",
+            "USD-reporting companies are excluded.",
+            "Companies reporting in USD are not included.",
+            "USD reporters are ranked separately.",
+            "USD amounts are not compared.",
+            "USD companies are excluded.",
+            "USD reporting companies are not included.",
+        ):
+            with self.subTest(wording=wording):
+                self.assertEqual(
+                    check_answer(
+                        case,
+                        f"- TCS — ₹12,000 crore\n{wording}",
+                        one_currency_output,
+                    ),
+                    [],
+                )
+
+        ten_inr_rows = "\n".join(
+            f"{index}. Company {index} — ₹{index * 100} crore"
+            for index in range(1, 11)
+        )
+        run_two_shape = (
+            f"{ten_inr_rows}\n\n"
+            "Note: USD-reporting companies are not ranked in the INR list; "
+            "use financial_currency=USD to view them."
+        )
+        self.assertEqual(check_answer(case, run_two_shape, one_currency_output), [])
+
+    def test_it_cash_two_currency_requirements_follow_tool_output_groups(self):
+        case = next(
+            case for case in eval_module.CASES
+            if case["id"] == "india_it_companies_by_cash"
+        )
+        two_groups = [json.dumps({"currency_groups": {"INR": 8, "USD": 2}})]
+        one_group_answer = "- TCS — ₹12,000 crore"
+        self.assertEqual(check_answer(case, one_group_answer, [
+            json.dumps({"currency_groups": {"USD": 2}})
+        ]), [])
+
+        two_group_answer = (
+            "1. TCS — ₹12,000 crore\n"
+            "USD reporters are ranked separately (2 companies)."
+        )
+        self.assertEqual(check_answer(case, two_group_answer, two_groups), [])
+
+        no_statement = (
+            "1. TCS — ₹12,000 crore"
+        )
+        missing_statement = check_answer(case, no_statement, two_groups)
+        self.assertTrue(any("not ranked" in reason for reason in missing_statement))
+        self.assertTrue(any("USD group or its count" in reason for reason in missing_statement))
+
+        unnamed_group = (
+            "1. TCS — ₹12,000 crore\n"
+            "USD-reporting companies are ranked separately."
+        )
+        missing_count = check_answer(case, unnamed_group, two_groups)
+        self.assertEqual(missing_count, [])
+
+        mixed_currency_ranking = (
+            "1. TCS — ₹12,000 crore\n"
+            "2. Infosys — USD 3 billion\n"
+            "USD reporters are ranked separately (2 companies)."
+        )
+        mixed_result = check_answer(case, mixed_currency_ranking, two_groups)
+        self.assertTrue(any("mixes USD and INR" in reason for reason in mixed_result))
+
+    def test_it_cash_eval_allows_two_screener_calls(self):
+        case = next(
+            case for case in eval_module.CASES
+            if case["id"] == "india_it_companies_by_cash"
+        )
+        limits = case["tool_call_limits"]
+        actual = [
+            {
+                "name": "india_screener",
+                "args": {
+                    "sector": "Technology",
+                    "sort_by": "total_cash",
+                    "sort_order": "desc",
+                },
+            },
+            {"name": "india_screener", "args": {"financial_currency": "INR"}},
+        ]
+        self.assertTrue(check_turn(case["turns"][0]["calls"], actual, limits)[0])
+        for industry in (
+            "IT",
+            "Information Technology Services",
+            "Software - Application",
+        ):
+            with self.subTest(industry=industry):
+                self.assertTrue(check_turn(
+                    case["turns"][0]["calls"],
+                    [{
+                        "name": "india_screener",
+                        "args": {
+                            "industry": industry,
+                            "sort_by": "total_cash",
+                            "sort_order": "desc",
+                        },
+                    }],
+                    limits,
+                )[1])
+        actual.append({"name": "india_screener", "args": {"financial_currency": "USD"}})
+        self.assertFalse(check_turn(case["turns"][0]["calls"], actual, limits)[0])
+        only_sector_call = [{
+            "name": "india_screener",
+            "args": {
+                "sector": "Technology",
+                "sort_by": "total_cash",
+                "sort_order": "desc",
+            },
+        }]
+        self.assertTrue(check_turn(
+            case["turns"][0]["calls"],
+            only_sector_call,
+            limits,
+        )[1])
 
 
 if __name__ == "__main__":
