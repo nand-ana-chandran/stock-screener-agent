@@ -554,7 +554,9 @@ def india_screener(
 
     Returns:
         JSON containing snapshot_date, total_matches, excluded_missing_data, and rows.
-        Money fields carry their quote or financial currency labels.
+        Money fields carry their quote or financial currency labels. If a requested
+        sector or industry returns no matches, the response includes the valid values
+        present in the snapshot.
     """
     if sort_by not in INDIA_SORT_FIELDS:
         return f"Unknown sort_by '{sort_by}'. Valid options: {', '.join(INDIA_SORT_FIELDS)}"
@@ -703,12 +705,26 @@ def india_screener(
             "financial_currency": financial_currency,
         })
 
-    return json.dumps({
+    response = {
         "snapshot_date": get_snapshot_date(snapshot),
         "total_matches": total_matches,
         "excluded_missing_data": excluded_missing_data,
         "rows": rows,
-    }, indent=2, ensure_ascii=False)
+    }
+    if total_matches == 0 and (sector is not None or industry is not None):
+        response["available_sectors"] = sorted({
+            record["sector"]
+            for record in tickers.values()
+            if record.get("status") not in ("failed", "skipped")
+            and isinstance(record.get("sector"), str)
+        })
+        response["available_industries"] = sorted({
+            record["industry"]
+            for record in tickers.values()
+            if record.get("status") not in ("failed", "skipped")
+            and isinstance(record.get("industry"), str)
+        })
+    return json.dumps(response, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":

@@ -94,4 +94,18 @@ result = check_grounding(
 )
 assert [item["text"] for item in result["ungrounded"]] == ["1,63,660"]
 
+result = check_grounding(
+    "11. Revenue: 12.5%\n12) Market cap: ₹16.27 lakh crore",
+    ["Revenue: 12.5%; Market cap: ₹16.27 lakh crore"],
+    "",
+)
+assert result["ungrounded"] == []
+
+result = check_grounding(
+    "11. Revenue: 99.9%",
+    ["Revenue: 12.5%"],
+    "",
+)
+assert [item["text"] for item in result["ungrounded"]] == ["99.9%"]
+
 print("All grounding tests passed.")

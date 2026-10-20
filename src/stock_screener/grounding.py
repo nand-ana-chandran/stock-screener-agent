@@ -52,12 +52,19 @@ def _extract_numbers(text):
         )
         year = value.is_integer() and 1990 <= value <= 2100
         time_hyphen_unit = TIME_HYPHEN_PATTERN.match(text[match.end():]) is not None
+        line_start = text.rfind("\n", 0, match.start()) + 1
+        ordered_list_marker = (
+            not text[line_start:match.start()].strip()
+            and re.match(r"[.)]\s+", text[match.end():]) is not None
+        )
         yield {
             "token": token,
             "value": value,
             "start": match.start(),
             "end": match.end(),
-            "ignored": bare_small_integer or year or time_hyphen_unit,
+            "ignored": (
+                bare_small_integer or year or time_hyphen_unit or ordered_list_marker
+            ),
         }
 
 

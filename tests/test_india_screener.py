@@ -191,6 +191,17 @@ class TestIndiaScreener(unittest.TestCase):
         )
         self.assertEqual(market_cap_filter["excluded_missing_data"], 4)
 
+    def test_no_sector_matches_returns_valid_sector_and_industry_values(self):
+        result = self._invoke({
+            "sector": "Pharmaceuticals",
+        })
+
+        self.assertEqual(result["total_matches"], 0)
+        self.assertEqual(result["rows"], [])
+        self.assertIn("Technology", result["available_sectors"])
+        self.assertIn("Software", result["available_industries"])
+        self.assertNotIn("Pharmaceuticals", result["available_sectors"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

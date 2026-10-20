@@ -122,8 +122,7 @@ CASES = [
     {"id": "india_market_cap_range", "turns": [
         {"prompt": "Indian stocks with market cap between 300 and 1000 crore rupees",
          "calls": [{"tool": "india_screener", "args": {
-             "min_market_cap_crore": 300, "max_market_cap_crore": 1000,
-             "sort_by": "market_cap", "sort_order": "desc"}}]}]},
+             "min_market_cap_crore": 300, "max_market_cap_crore": 1000}}]}]},
     {"id": "india_next_pe_page", "turns": [
         {"prompt": "Show NSE companies ranked 11 through 20 by lowest trailing P/E",
          "calls": [{"tool": "india_screener", "args": {
