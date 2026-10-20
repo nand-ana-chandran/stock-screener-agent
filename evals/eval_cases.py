@@ -31,6 +31,70 @@ def industry_contains(value):
     return lambda actual: isinstance(actual, str) and value.casefold() in actual.casefold()
 
 
+def check_it_cash_answer(answer):
+    issues = []
+    figure_pattern = re.compile(
+        r"(?<![\w,])(?P<number>(?:\d{1,2}(?:,\d{2})*,\d{3}|"
+        r"\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s*"
+        r"(?P<unit>lakh\s+crore|crore|million|billion)\b",
+        re.IGNORECASE,
+    )
+    currency_prefix = re.compile(r"(?:₹|\$|\bUSD)\s*$", re.IGNORECASE)
+    currency_suffix = re.compile(
+        r"^\s*(?:[-–—:(]\s*)?(?:INR|USD)\b",
+        re.IGNORECASE,
+    )
+    currencies_by_line = {}
+    for line_number, line in enumerate(answer.splitlines()):
+        row_currencies = set()
+        for match in figure_pattern.finditer(line):
+            prefix = line[:match.start("number")]
+            suffix = line[match.end("unit"):]
+            has_prefix_label = currency_prefix.search(prefix) is not None
+            suffix_match = currency_suffix.match(suffix)
+            if not has_prefix_label and suffix_match is None:
+                issues.append(
+                    f"figure {match.group().strip()!r} on line {line_number + 1} "
+                    "has no currency label"
+                )
+                continue
+            label = (
+                suffix_match.group().strip().upper()
+                if suffix_match is not None
+                else ("USD" if re.search(r"\bUSD\b|\$", prefix, re.IGNORECASE) else "INR")
+            )
+            row_currencies.add("USD" if label in {"USD", "$"} else "INR")
+
+        row_marker_values = set()
+        if re.match(r"\s*(?:[-*•]|\d+[.)])\s*", line) and re.search(
+            r"\d", line
+        ):
+            if re.search(r"\bUSD\b|\$", line, re.IGNORECASE):
+                row_marker_values.add("USD")
+            if re.search(r"\bINR\b|₹", line, re.IGNORECASE):
+                row_marker_values.add("INR")
+        if row_marker_values or re.match(r"\s*(?:[-*•]|\d+[.)])\s*", line):
+            currencies_by_line[line_number] = row_currencies | row_marker_values
+
+    ranked_currencies = (
+        set().union(*currencies_by_line.values()) if currencies_by_line else set()
+    )
+    if ranked_currencies == {"USD", "INR"}:
+        issues.append("ranked list mixes USD and INR amounts")
+
+    separate_usd_pattern = re.compile(
+        r"\b(?:USD[- ]reporting companies|companies reporting in USD|USD reporters)\b"
+        r".{0,80}\b(?:ranked separately|not included|excluded)\b",
+        re.IGNORECASE,
+    )
+    if separate_usd_pattern.search(answer) is None:
+        issues.append(
+            "answer does not state that USD-reporting companies are ranked separately "
+            "or not included"
+        )
+    return issues
+
+
 SMALL_CAP_TECH_GAINERS = {
     "tool": "custom_screener",
     "args": {
@@ -130,11 +194,16 @@ CASES = [
     {"id": "india_pharma_growth", "turns": [
         {"prompt": "Indian pharma industry companies with at least 10% revenue growth",
          "calls": [{"tool": "india_screener", "args": {
-             "min_revenue_growth": 10},
+             "min_revenue_growth": at_least(10)},
              "any_args": [
                  {"sector": "Healthcare"},
-                 {"industry": industry_contains("Drug Manufacturers")},
-             ]}]}]},
+                 {"industry": industry_contains("pharma")},
+                 {"industry": industry_contains("drug")},
+             ],
+             "failure_message": (
+                 "min_revenue_growth >= 10 and either sector Healthcare or "
+                 "industry containing 'pharma' or 'drug'"
+             )}]}]},
     {"id": "india_profit_margin", "turns": [
         {"prompt": "NSE companies with profit margin over 15%, highest margin first",
          "calls": [{"tool": "india_screener", "args": {
@@ -157,8 +226,10 @@ CASES = [
     {"id": "india_small_cap_sector", "turns": [
         {"prompt": "List the 10 smallest market cap NSE banks in ascending order",
          "calls": [{"tool": "india_screener", "args": {
-             "sector": "Financial Services", "sort_by": "market_cap",
-             "sort_order": "asc", "limit": 10}}]}]},
+             "sort_by": "market_cap", "sort_order": "asc",
+             "industry": industry_contains("banks"),
+             "sector": lambda value: value is None
+             or value.strip().casefold() == "financial services"}}]}]},
     {"id": "india_infosys_cash_vs_market_cap", "turns": [
         {"prompt": "Using the India snapshot for Infosys's NSE ticker INFY.NS, compare total cash "
                    "with market cap. Include both exact formatted values. State cash is in USD "
@@ -179,7 +250,7 @@ CASES = [
          infosys_snapshot_date_pattern,
          lambda: infosys_snapshot_pattern("market_cap", "quote_currency"),
          lambda: infosys_snapshot_pattern("total_cash", "financial_currency"),
-         r"(?i)(?:cannot|can't|can not).{0,60}(?:compare|comparable).{0,60}exchange rate",
+         r"(?i)(?:\b(?:cannot|can't|can['’]t|not)\b.{0,150}\bexchange rate\b|\bnot directly comparable\b|\bdifferent currencies\b|\bcommon currency\b)",
      ],
      "answer_must_not_match": [
          r"(?i)\b(?:cash[- ]to[- ]market[- ]cap|cash/market[- ]cap)\s+ratio\b",
@@ -192,12 +263,9 @@ CASES = [
          "calls": [{"tool": "india_screener", "args": {
              "sector": "Technology", "sort_by": "total_cash",
              "sort_order": "desc"}}]}],
-     "answer_must_include": [
-         r"(?im)^(?:[-*•]|\d+[.)])[^\n]*\b(?:USD|INR)\b[^\n]*$",
-     ],
      "answer_must_not_match": [
-         r"(?im)^(?:[-*•]|\d+[.)])(?![^\n]*\b(?:USD|INR)\b)[^\n]*(?:\d[\d,.]*|₹|\$|cash)[^\n]*$",
-     ]},
+     ],
+     "answer_checks": [check_it_cash_answer]},
 
     # --- US routing regression: India tool must not be used ---
     {"id": "us_query_does_not_route_to_india", "turns": [

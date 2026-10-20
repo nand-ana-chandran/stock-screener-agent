@@ -128,7 +128,15 @@ def check_turn(expected_calls, actual_calls, tool_call_limits=None):
                 break
         if not matched:
             candidates = [a["args"] for a in actual_calls if a["name"] == exp["tool"]]
-            reasons.append(f"{exp['tool']}: no call matched {list(exp['args'])}; actual args: {candidates}")
+            constraint = exp.get("failure_message")
+            if constraint is None:
+                constraint = ", ".join(
+                    f"{key}={value if not callable(value) else 'required constraint'}"
+                    for key, value in exp.get("args", {}).items()
+                )
+            reasons.append(
+                f"{exp['tool']}: unmet constraint ({constraint}); actual args: {candidates}"
+            )
     return True, not reasons, reasons
 
 
@@ -144,6 +152,8 @@ def check_answer(case, answer):
             pattern = pattern()
         if re.search(pattern, answer, re.IGNORECASE | re.MULTILINE):
             reasons.append(f"answer matched forbidden pattern: {pattern}")
+    for check in case.get("answer_checks", []):
+        reasons.extend(check(answer))
     return reasons
 
 
