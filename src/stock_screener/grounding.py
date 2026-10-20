@@ -2,11 +2,11 @@ import re
 
 
 NUMBER_PATTERN = re.compile(
-    r"(?<![\w.])\$?"
-    r"(?:\d{1,3}(?:,\d{3})+|\d+)"
+    r"(?<![\w.])(?:₹|\$)?"
+    r"(?:\d{1,3}(?:,\d{3})+|\d{1,2}(?:,\d{2})*,\d{3}|\d+)"
     r"(?:\.\d+)?"
     r"(?:[eE][+-]?\d+)?"
-    r"\s*(?:%|(?i:K|M|B|T|million|billion|trillion))?"
+    r"\s*(?:%|(?i:lakh\s+crore|crore|K|M|B|T|million|billion|trillion))?"
     r"(?!\w)",
     re.IGNORECASE,
 )
@@ -18,6 +18,8 @@ SUFFIX_MULTIPLIERS = {
     "million": 1_000_000,
     "billion": 1_000_000_000,
     "trillion": 1_000_000_000_000,
+    "crore": 10_000_000,
+    "lakh crore": 1_000_000_000_000,
 }
 TIME_HYPHEN_PATTERN = re.compile(r"-(?:week|day|month|year)s?\b", re.IGNORECASE)
 
@@ -25,19 +27,21 @@ TIME_HYPHEN_PATTERN = re.compile(r"-(?:week|day|month|year)s?\b", re.IGNORECASE)
 def _extract_numbers(text):
     for match in NUMBER_PATTERN.finditer(text):
         token = match.group().strip()
-        value_text = token.replace("$", "").replace(",", "")
+        value_text = token.replace("$", "").replace("₹", "").replace(",", "")
         suffix_match = re.search(
-            r"\s*(million|billion|trillion|[KMBT])$", value_text, re.IGNORECASE
+            r"\s*(lakh\s+crore|crore|million|billion|trillion|[KMBT])$",
+            value_text,
+            re.IGNORECASE,
         )
         if suffix_match:
-            suffix = suffix_match.group(1).lower()
+            suffix = re.sub(r"\s+", " ", suffix_match.group(1).lower())
             value_text = value_text[:suffix_match.start()].strip()
             multiplier = SUFFIX_MULTIPLIERS[suffix]
         else:
             multiplier = 1
         value_text = value_text.rstrip("%").strip()
         value = float(value_text) * multiplier
-        has_marker = "$" in token or "%" in token
+        has_marker = "$" in token or "₹" in token or "%" in token
         has_decimal = "." in value_text
         bare_small_integer = (
             not has_marker

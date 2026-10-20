@@ -7,13 +7,29 @@ from pathlib import Path
 
 DEFAULT_SNAPSHOT_PATH = Path("data/india_snapshot.json")
 RUPEES_PER_CRORE = 10_000_000
-RUPEES_PER_LAKH_CRORE = 10_000_000_000_000
+RUPEES_PER_LAKH_CRORE = 1_000_000_000_000
 
 
 def load_snapshot(path=DEFAULT_SNAPSHOT_PATH):
-    """Load an India snapshot JSON file from disk."""
+    """Load a snapshot with skipped tickers marked unavailable."""
     with Path(path).open(encoding="utf-8") as snapshot_file:
-        return json.load(snapshot_file)
+        snapshot = json.load(snapshot_file)
+    tickers = snapshot.get("tickers", {})
+    skipped_symbols = [
+        symbol
+        for symbol, record in tickers.items()
+        if record.get("status") == "skipped"
+    ]
+    if skipped_symbols:
+        snapshot["tickers"] = {
+            symbol: record
+            for symbol, record in tickers.items()
+            if record.get("status") != "skipped"
+        }
+        snapshot["skipped_ticker_count"] = (
+            snapshot.get("skipped_ticker_count", 0) + len(skipped_symbols)
+        )
+    return snapshot
 
 
 def get_snapshot_date(snapshot):
@@ -43,15 +59,23 @@ def _indian_grouping(value):
     return sign + grouped + (separator + fraction if separator else "")
 
 
-def format_money(value, currency):
-    """Format INR values in crore and label non-INR values with their currency."""
+def _compact_indian_amount(value):
+    integer, separator, fraction = _indian_grouping(value).partition(".")
+    fraction = fraction.rstrip("0")
+    return integer + (separator + fraction if fraction else "")
+
+
+def format_money(value, currency, scale_inr=True):
+    """Format INR values in crore, or as rupees when scale_inr is false."""
     if value is None:
         return None
     amount = float(value)
     code = (currency or "").upper()
     if code == "INR":
-        if abs(amount) > RUPEES_PER_LAKH_CRORE:
-            return f"₹{_indian_grouping(amount / RUPEES_PER_LAKH_CRORE)} lakh crore"
+        if not scale_inr:
+            return f"₹{_indian_grouping(amount)}"
+        if abs(amount) >= RUPEES_PER_LAKH_CRORE:
+            return f"₹{_compact_indian_amount(amount / RUPEES_PER_LAKH_CRORE)} lakh crore"
         return f"₹{_indian_grouping(amount / RUPEES_PER_CRORE)} crore"
     formatted_amount = f"{amount:,.2f}"
     if not code:

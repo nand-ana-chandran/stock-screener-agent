@@ -10,7 +10,7 @@ from langgraph.prebuilt import ToolNode
 from langchain_google_genai import ChatGoogleGenerativeAI
 from colorama import Fore
 
-from .tool import simple_screener, custom_screener, company_snapshot
+from .tool import simple_screener, custom_screener, company_snapshot, india_screener
 
 llm = ChatGoogleGenerativeAI(
     model=os.getenv("MODEL_NAME", "gemini-3.5-flash-lite"),
@@ -18,14 +18,14 @@ llm = ChatGoogleGenerativeAI(
     max_retries=1,
 )
 
-tools = [simple_screener, custom_screener, company_snapshot]
+tools = [simple_screener, custom_screener, company_snapshot, india_screener]
 
 llm_with_tools = llm.bind_tools(tools)
 
 tool_node = ToolNode(tools)
 
 SYSTEM_PROMPT = (
-    "You are a stock screening assistant. Use custom_screener whenever the user "
+    "You are a stock screening assistant. For US stocks, use custom_screener whenever the user "
     "wants a ranking, a market cap range, or a sector. Treat 'small-cap' as "
     "min_market_cap_millions=300 and max_market_cap_millions=2000 unless the user "
     "specifies different bounds. When ranking by percent change, "
@@ -53,6 +53,10 @@ SYSTEM_PROMPT = (
     "number of results when available; use offset only for a requested next page. "
     "Call company_snapshot once per company the user names or selects. "
     "Use company_snapshot when the user asks about one specific company or ticker. "
+    "Use india_screener only when the user mentions India, NSE, Nifty, Indian companies, "
+    "or rupees; otherwise use the US tools. Always state the snapshot date. "
+    "Never compare values in different currencies. If a value is labeled USD while the "
+    "market cap is in INR, say so instead of comparing them. "
     "A headline with a note field is a general market headline; label it that way. "
     "Report only data returned by the tools; never invent prices, tickers or headlines. "
     "Money amounts and percentages arrive already formatted; copy them exactly and never add raw decimals. "

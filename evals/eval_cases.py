@@ -97,4 +97,46 @@ CASES = [
         {"prompt": "What's the weather in Kochi today?", "calls": []}]},
     {"id": "no_tool_greeting", "turns": [
         {"prompt": "hi", "calls": []}]},
+
+    # --- india_screener: snapshot-only India universe ---
+    {"id": "india_nifty_market_cap", "turns": [
+        {"prompt": "Show the top 10 Nifty companies by market cap in India",
+         "calls": [{"tool": "india_screener", "args": {
+             "sort_by": "market_cap", "sort_order": "desc", "limit": 10}}]}]},
+    {"id": "india_sector_pe", "turns": [
+        {"prompt": "For NSE technology companies, show trailing P/E from 10 to 25, lowest first",
+         "calls": [{"tool": "india_screener", "args": {
+             "sector": "Technology", "min_trailing_pe": 10,
+             "max_trailing_pe": 25, "sort_by": "trailing_pe",
+             "sort_order": "asc"}}]}]},
+    {"id": "india_pharma_growth", "turns": [
+        {"prompt": "Indian pharma industry companies with at least 10% revenue growth",
+         "calls": [{"tool": "india_screener", "args": {
+             "industry": "Pharmaceutical", "min_revenue_growth": 10,
+             "sort_by": "revenue_growth", "sort_order": "desc"}}]}]},
+    {"id": "india_profit_margin", "turns": [
+        {"prompt": "NSE companies with profit margin over 15%, highest margin first",
+         "calls": [{"tool": "india_screener", "args": {
+             "min_profit_margin": 15, "sort_by": "profit_margin",
+             "sort_order": "desc"}}]}]},
+    {"id": "india_market_cap_range", "turns": [
+        {"prompt": "Indian stocks with market cap between 300 and 1000 crore rupees",
+         "calls": [{"tool": "india_screener", "args": {
+             "min_market_cap_crore": 300, "max_market_cap_crore": 1000,
+             "sort_by": "market_cap", "sort_order": "desc"}}]}]},
+    {"id": "india_next_pe_page", "turns": [
+        {"prompt": "Show NSE companies ranked 11 through 20 by lowest trailing P/E",
+         "calls": [{"tool": "india_screener", "args": {
+             "sort_by": "trailing_pe", "sort_order": "asc",
+             "limit": 10, "offset": 10}}]}]},
+    {"id": "india_fastest_revenue_growth", "turns": [
+        {"prompt": "Which Indian companies have the fastest revenue growth? Show five",
+         "calls": [{"tool": "india_screener", "args": {
+             "sort_by": "revenue_growth", "sort_order": "desc",
+             "limit": 5}}]}]},
+    {"id": "india_small_cap_sector", "turns": [
+        {"prompt": "List the 10 smallest market cap NSE banks in ascending order",
+         "calls": [{"tool": "india_screener", "args": {
+             "sector": "Financial Services", "sort_by": "market_cap",
+             "sort_order": "asc", "limit": 10}}]}]},
 ]
