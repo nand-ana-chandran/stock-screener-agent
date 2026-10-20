@@ -55,7 +55,7 @@ uv run --env-file .env streamlit run app.py
 Or the terminal chat:
 
 ```powershell
-uv run --env-file .env flow.py
+uv run --env-file .env python -m stock_screener.flow
 ```
 
 ## Evaluation
@@ -70,8 +70,8 @@ Run it:
 
 ```powershell
 $env:CASES_MODULE = "eval_cases"      # or "eval_holdout"
-uv run --env-file .env eval.py 3      # 3 repeats
-uv run --env-file .env eval.py 1 snapshot_nvda  # one case
+uv run --env-file .env python evals/eval.py 3      # 3 repeats
+uv run --env-file .env python evals/eval.py 1 snapshot_nvda  # one case
 ```
 
 ### Run offline regression tests
@@ -79,9 +79,10 @@ uv run --env-file .env eval.py 1 snapshot_nvda  # one case
 These tests do not call the Gemini API:
 
 ```powershell
-uv run python test_custom_screener.py
-uv run python test_sort_order.py
-uv run python test_grounding.py
+uv run python tests/test_custom_screener.py
+uv run python tests/test_fetch_all_quotes.py
+uv run python tests/test_sort_order.py
+uv run python tests/test_grounding.py
 ```
 
 They cover custom screening filters, market-cap boundaries, positive-gainer filtering, sorting, pagination and result counts, plus number-grounding checks. Run them after changing the screener tools or evaluation logic.
@@ -121,17 +122,21 @@ Writing these down because they are the useful part.
 ## Project structure
 
 ```text
-flow.py                 LangGraph agent, system prompt, tool-call guard
-tool.py                 Stock-screening tools and number formatting
+src/
+  stock_screener/
+    __init__.py
+    flow.py              LangGraph agent, system prompt, tool-call guard
+    tool.py              Stock-screening tools and number formatting
+    grounding.py         Number-grounding checker
 app.py                  Streamlit chat interface
-eval.py                 Evaluation harness
-eval_cases.py           Development evaluation cases
-eval_holdout.py         Held-out evaluation cases
-grounding.py            Number-grounding checker
-regrade.py              Re-grade saved results offline
-test_custom_screener.py Stock filtering, sorting and pagination tests
-test_sort_order.py      Predefined screener sorting tests
-test_grounding.py       Number-grounding regression tests
+evals/
+  eval.py               Evaluation harness
+  eval_cases.py         Development evaluation cases
+  eval_holdout.py       Held-out evaluation cases
+  regrade.py            Re-grade saved results offline
+  check_*.py            Evaluation checks
+tests/
+  test_*.py             Offline regression tests
 pyproject.toml          Project dependencies and configuration
 uv.lock                 Locked dependency versions
 ```
