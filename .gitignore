@@ -16,5 +16,5 @@ eval_results_*.json
 
 .vscode/
 
-data/*.checkpoint*
-data/sample50.csv
+data/sample/
+data/*.tmp
