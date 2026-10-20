@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 import time
 import uuid
@@ -69,7 +70,7 @@ def arg_ok(expected, actual):
     return expected == actual
 
 
-def check_turn(expected_calls, actual_calls):
+def check_turn(expected_calls, actual_calls, tool_call_limits=None):
     """Returns (tools_ok, args_ok, reasons). Tools are compared as a multiset (order ignored).
     Strict on purpose: an invalid tool name counts as a failure even if the agent recovered."""
     reasons = []
@@ -77,10 +78,31 @@ def check_turn(expected_calls, actual_calls):
     if invalid:
         reasons.append(f"INVALID TOOL NAME emitted: {invalid}")
 
+    tool_call_limits = tool_call_limits or {}
     exp_names = Counter(c["tool"] for c in expected_calls)
     act_names = Counter(c["name"] for c in actual_calls)
-    if exp_names != act_names:
-        reasons.append(f"tools expected {dict(exp_names)}, got {dict(act_names)}")
+    constrained_names = set(tool_call_limits)
+    exact_expected = Counter({
+        name: count for name, count in exp_names.items()
+        if name not in constrained_names
+    })
+    exact_actual = Counter({
+        name: count for name, count in act_names.items()
+        if name not in constrained_names
+    })
+    if exact_expected != exact_actual:
+        reasons.append(
+            f"tools expected {dict(exact_expected)}, got {dict(exact_actual)}"
+        )
+    for name, bounds in tool_call_limits.items():
+        count = act_names[name]
+        minimum = bounds.get("min", 0)
+        maximum = bounds.get("max")
+        if count < minimum or (maximum is not None and count > maximum):
+            reasons.append(
+                f"{name}: expected between {minimum} and {maximum} calls, got {count}"
+            )
+    if reasons:
         return False, False, reasons
 
     used = set()
@@ -90,7 +112,17 @@ def check_turn(expected_calls, actual_calls):
             if i in used or act["name"] != exp["tool"]:
                 continue
             merged = {**DEFAULTS.get(act["name"], {}), **act["args"]}
-            if all(arg_ok(v, merged.get(k)) for k, v in exp["args"].items()):
+            args_match = all(
+                arg_ok(value, merged.get(key))
+                for key, value in exp.get("args", {}).items()
+            )
+            alternatives = exp.get("any_args", [])
+            if alternatives:
+                args_match = args_match and any(
+                    all(arg_ok(value, merged.get(key)) for key, value in option.items())
+                    for option in alternatives
+                )
+            if args_match:
                 used.add(i)
                 matched = True
                 break
@@ -98,6 +130,21 @@ def check_turn(expected_calls, actual_calls):
             candidates = [a["args"] for a in actual_calls if a["name"] == exp["tool"]]
             reasons.append(f"{exp['tool']}: no call matched {list(exp['args'])}; actual args: {candidates}")
     return True, not reasons, reasons
+
+
+def check_answer(case, answer):
+    reasons = []
+    for pattern in case.get("answer_must_include", []):
+        if callable(pattern):
+            pattern = pattern()
+        if re.search(pattern, answer, re.IGNORECASE | re.MULTILINE) is None:
+            reasons.append(f"answer did not match required pattern: {pattern}")
+    for pattern in case.get("answer_must_not_match", []):
+        if callable(pattern):
+            pattern = pattern()
+        if re.search(pattern, answer, re.IGNORECASE | re.MULTILINE):
+            reasons.append(f"answer matched forbidden pattern: {pattern}")
+    return reasons
 
 
 def run_case(case, rep):
@@ -114,7 +161,11 @@ def run_case(case, rep):
                 turn_result = run_turn(turn["prompt"], thread_id)
                 actual = turn_result["actual_calls"]
                 guard_delta = {k: GUARD_STATS[k] - before[k] for k in GUARD_STATS}
-                tools_ok, args_ok, reasons = check_turn(turn["calls"], actual)
+                tools_ok, args_ok, reasons = check_turn(
+                    turn["calls"], actual, case.get("tool_call_limits")
+                )
+                answer_reasons = check_answer(case, turn_result["final_text"])
+                reasons.extend(answer_reasons)
                 tool_call_args = [call["args"] for call in actual]
                 rec.update(status="pass" if tools_ok and args_ok and not reasons else "fail",
                            actual_calls=actual, tools_ok=tools_ok, args_ok=args_ok,

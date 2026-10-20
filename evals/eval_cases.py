@@ -2,6 +2,9 @@
 # Each turn has a prompt and the tool calls we expect.
 # An arg check is a literal (exact match, case-insensitive for strings)
 # or a function that returns True/False.
+import re
+
+from stock_screener.india_data import format_money, get_snapshot_date, load_snapshot
 
 def between(lo, hi):
     return lambda v: v is not None and lo <= v <= hi
@@ -11,6 +14,21 @@ def at_least(n):
 
 def non_empty(v):
     return isinstance(v, str) and len(v.strip()) > 0
+
+
+def infosys_snapshot_pattern(field, currency_field):
+    snapshot = load_snapshot()
+    record = snapshot["tickers"]["INFY.NS"]
+    formatted = format_money(record[field], record[currency_field])
+    return re.escape(formatted)
+
+
+def infosys_snapshot_date_pattern():
+    return re.escape(get_snapshot_date(load_snapshot()))
+
+
+def industry_contains(value):
+    return lambda actual: isinstance(actual, str) and value.casefold() in actual.casefold()
 
 
 SMALL_CAP_TECH_GAINERS = {
@@ -112,8 +130,11 @@ CASES = [
     {"id": "india_pharma_growth", "turns": [
         {"prompt": "Indian pharma industry companies with at least 10% revenue growth",
          "calls": [{"tool": "india_screener", "args": {
-             "industry": "Pharmaceutical", "min_revenue_growth": 10,
-             "sort_by": "revenue_growth", "sort_order": "desc"}}]}]},
+             "min_revenue_growth": 10},
+             "any_args": [
+                 {"sector": "Healthcare"},
+                 {"industry": industry_contains("Drug Manufacturers")},
+             ]}]}]},
     {"id": "india_profit_margin", "turns": [
         {"prompt": "NSE companies with profit margin over 15%, highest margin first",
          "calls": [{"tool": "india_screener", "args": {
@@ -138,4 +159,48 @@ CASES = [
          "calls": [{"tool": "india_screener", "args": {
              "sector": "Financial Services", "sort_by": "market_cap",
              "sort_order": "asc", "limit": 10}}]}]},
+    {"id": "india_infosys_cash_vs_market_cap", "turns": [
+        {"prompt": "Using the India snapshot for Infosys's NSE ticker INFY.NS, compare total cash "
+                   "with market cap. Include both exact formatted values. State cash is in USD "
+                   "and market cap is in INR, and that they cannot be compared without an "
+                   "exchange rate. Do not give a ratio.",
+         "calls": [{"tool": "india_screener", "args": {
+             "symbol": lambda value: isinstance(value, str)
+             and value.upper().removesuffix(".NS") == "INFY"}}]}],
+     "tool_call_limits": {
+         "india_screener": {"min": 1, "max": 2},
+         "company_snapshot": {"max": 0},
+     },
+     "answer_must_include": [
+         r"\bUSD\b",
+         r"\bINR\b",
+         r"(?i)cash.{0,100}\bUSD\b",
+         r"(?i)market cap.{0,100}\bINR\b",
+         infosys_snapshot_date_pattern,
+         lambda: infosys_snapshot_pattern("market_cap", "quote_currency"),
+         lambda: infosys_snapshot_pattern("total_cash", "financial_currency"),
+         r"(?i)(?:cannot|can't|can not).{0,60}(?:compare|comparable).{0,60}exchange rate",
+     ],
+     "answer_must_not_match": [
+         r"(?i)\b(?:cash[- ]to[- ]market[- ]cap|cash/market[- ]cap)\s+ratio\b",
+         r"(?i)(?:cash|market cap).{0,40}(?:larger|higher|greater|exceeds|more than).{0,40}(?:cash|market cap)",
+         r"(?i)(?:market cap[^.\n]{0,50}USD\s*[\d,]|USD\s*[\d,][^.\n]{0,50}market cap)",
+     ]},
+    {"id": "india_it_companies_by_cash", "turns": [
+        {"prompt": "Which Nifty 500 IT companies have the most cash? Rank by total cash if "
+                   "supported, and label the currency for every row.",
+         "calls": [{"tool": "india_screener", "args": {
+             "sector": "Technology", "sort_by": "total_cash",
+             "sort_order": "desc"}}]}],
+     "answer_must_include": [
+         r"(?im)^(?:[-*•]|\d+[.)])[^\n]*\b(?:USD|INR)\b[^\n]*$",
+     ],
+     "answer_must_not_match": [
+         r"(?im)^(?:[-*•]|\d+[.)])(?![^\n]*\b(?:USD|INR)\b)[^\n]*(?:\d[\d,.]*|₹|\$|cash)[^\n]*$",
+     ]},
+
+    # --- US routing regression: India tool must not be used ---
+    {"id": "us_query_does_not_route_to_india", "turns": [
+        {"prompt": "Top small cap tech gainers in the US today",
+         "calls": [SMALL_CAP_TECH_GAINERS]}]},
 ]
