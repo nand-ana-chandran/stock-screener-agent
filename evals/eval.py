@@ -8,12 +8,34 @@ from collections import Counter
 from datetime import datetime
 
 import importlib
+import importlib.util
 from stock_screener.grounding import check_grounding
+from pathlib import Path
 
 CASES_MODULE = os.getenv("CASES_MODULE", "eval_cases")
 # Make eval_cases / eval_holdout importable by name from within this directory.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-CASES = importlib.import_module(CASES_MODULE).CASES
+
+
+def load_cases_module(module_spec):
+    """Load a cases module by import name or path to a Python file."""
+    candidate = Path(module_spec)
+    if candidate.suffix == ".py":
+        if not candidate.is_absolute() and not candidate.is_file():
+            candidate = Path(__file__).resolve().parents[1] / candidate
+        candidate = candidate.resolve()
+        spec = importlib.util.spec_from_file_location(
+            f"eval_cases_{candidate.stem}", candidate
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Cannot load cases module from {candidate}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    return importlib.import_module(module_spec)
+
+
+CASES = load_cases_module(CASES_MODULE).CASES
 from stock_screener.flow import graph, GUARD_STATS, TOOL_GUARD
 
 MODEL = os.getenv("MODEL_NAME", "gemini-3.5-flash-lite")
@@ -79,9 +101,15 @@ def check_turn(expected_calls, actual_calls, tool_call_limits=None):
         reasons.append(f"INVALID TOOL NAME emitted: {invalid}")
 
     tool_call_limits = tool_call_limits or {}
+    any_of_tools = tool_call_limits.get("_any_of", [])
+    count_limits = {
+        name: bounds
+        for name, bounds in tool_call_limits.items()
+        if name != "_any_of"
+    }
     exp_names = Counter(c["tool"] for c in expected_calls)
     act_names = Counter(c["name"] for c in actual_calls)
-    constrained_names = set(tool_call_limits)
+    constrained_names = set(count_limits) | set(any_of_tools)
     exact_expected = Counter({
         name: count for name, count in exp_names.items()
         if name not in constrained_names
@@ -94,7 +122,7 @@ def check_turn(expected_calls, actual_calls, tool_call_limits=None):
         reasons.append(
             f"tools expected {dict(exact_expected)}, got {dict(exact_actual)}"
         )
-    for name, bounds in tool_call_limits.items():
+    for name, bounds in count_limits.items():
         count = act_names[name]
         minimum = bounds.get("min", 0)
         maximum = bounds.get("max")
@@ -102,6 +130,8 @@ def check_turn(expected_calls, actual_calls, tool_call_limits=None):
             reasons.append(
                 f"{name}: expected between {minimum} and {maximum} calls, got {count}"
             )
+    if any_of_tools and not any(act_names[name] for name in any_of_tools):
+        reasons.append(f"expected at least one call from {any_of_tools}")
     if reasons:
         return False, False, reasons
 
@@ -269,24 +299,41 @@ def select_cases(case_list, only_ids=None, prefix=None):
     return selected
 
 
-def main():
-    # Usage: python evals/eval.py [repeats] [case_id ...] [--prefix PREFIX]
-    #   python evals/eval.py 3 --prefix india_ -> all India cases, 3 repeats
+def parse_args(argv=None):
     import argparse
 
     parser = argparse.ArgumentParser(description="Run stock screener evaluation cases.")
     parser.add_argument("repeats", nargs="?", type=int, default=1)
     parser.add_argument("case_ids", nargs="*")
+    parser.add_argument(
+        "--cases",
+        help="Cases module name or path to a Python file (for example evals/heldout_india.py).",
+    )
     parser.add_argument("--prefix", help="Run only cases whose id starts with this prefix.")
-    args = parser.parse_args()
+    return parser.parse_args(argv)
+
+
+def main():
+    # Usage: python evals/eval.py [repeats] [case_id ...] [--prefix PREFIX] [--cases MODULE_OR_PATH]
+    args = parse_args()
+    module_spec = args.cases or CASES_MODULE
+    try:
+        cases_module = load_cases_module(module_spec)
+    except (ImportError, OSError, SyntaxError) as error:
+        raise SystemExit(f"Could not load cases module {module_spec!r}: {error}")
+    cases_module_name = (
+        Path(module_spec).stem
+        if Path(module_spec).suffix == ".py"
+        else module_spec.rsplit(".", 1)[-1]
+    )
 
     try:
-        cases = select_cases(CASES, args.case_ids, args.prefix)
+        cases = select_cases(cases_module.CASES, args.case_ids, args.prefix)
     except ValueError as error:
-        parser.error(str(error))
-    subset = bool(args.case_ids or args.prefix)
+        raise SystemExit(str(error))
+    subset = bool(args.case_ids or args.prefix or args.cases)
     tag = "_subset" if subset else ""
-    out = (f"eval_results_{MODEL}_{CASES_MODULE}_guard{GUARD_LABEL}{tag}_"
+    out = (f"eval_results_{MODEL}_{cases_module_name}_guard{GUARD_LABEL}{tag}_"
            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
     print(f"Model: {MODEL} | tool guard: {GUARD_LABEL} | cases: {len(cases)} | repeats: {args.repeats}\n")
 

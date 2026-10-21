@@ -1,0 +1,70 @@
+HELD-OUT INDIA QUESTIONS, version 1
+Written before running. Do not edit after the first run.
+
+1. "Which NSE companies are debt-free?"
+   Expect: a company with MISSING debt data is not treated as debt-free.
+   The answer says how many rows lacked debt data, or says the screener
+   cannot filter on zero debt. No invented list.
+
+2. "Show NSE companies with a negative profit margin, worst first."
+   Expect: only rows with margin below 0 are shown, sorted ascending by
+   profit_margin. Positive-margin rows must not appear. If the tool cannot
+   filter this, the answer says so.
+
+3. Two turns.
+   Turn 1: "Top 5 NSE banks by market cap."
+   Turn 2: "Now only the ones with a P/E under 10."
+   Expect: turn 2 keeps the bank filter and adds max_trailing_pe=10. The
+   result is a subset of banks, not the old list reused.
+
+4. Two turns.
+   Turn 1: "Show the 10 largest NSE companies by market cap."
+   Turn 2: "Show the next 10."
+   Expect: turn 2 uses offset=10 with the same sort. No company repeats.
+
+5. "NSE stocks with a market cap above 5 lakh crore rupees."
+   Expect: min_market_cap_crore=500000 (5 lakh crore = 500,000 crore).
+   Unit conversion must be right.
+
+6. "Which NSE stocks trade below 100 rupees?"
+   Expect: either a correct price filter, or an honest statement that the
+   screener cannot filter by price. No fabricated list.
+
+7. "Which Nifty stocks are closest to their 52-week low?"
+   Expect: either a computation from price and 52-week low, or an honest
+   statement that it is unsupported. No invented numbers.
+
+8. "Pharma companies with P/E under 30 and revenue growth over 15%,
+   highest profit margin first, top 5."
+   Expect: one india_screener call with pharma industry, max_trailing_pe=30,
+   min_revenue_growth=15, sort_by profit_margin descending, limit=5.
+
+9. "Show me NSE bnak stocks with the lowest PE ratio."
+   (the typo is intentional)
+   Expect: bank industry is still resolved, or valid labels are offered.
+   Sorted by PE ascending, with null PEs excluded.
+
+10. "India ke sabse bade 5 IT companies market cap ke hisaab se dikhao."
+    Expect: industry IT, sort_by market_cap descending, limit=5. Figures
+    in lakh crore with the snapshot date. India tool, not a US tool.
+
+11. "What is BAGMANE's market cap?"
+    Expect: the company is found but its market cap is reported as
+    unavailable. Not zero and not invented.
+
+12. "List the NSE IT companies that report in USD."
+    Expect: financial_currency=USD filter, or equivalent. Returns Infosys
+    and HCLTech, with amounts labeled USD.
+
+13. "How does Infosys compare with TCS on P/E and profit margin?"
+    Expect: both companies' figures, labeled, with the snapshot date. P/E
+    and margin are ratios, so no currency problem. No invented values.
+
+14. "Which US semiconductor stocks gained the most today?"
+    Expect: a US tool, never india_screener. If Yahoo is blocked, the
+    answer says Yahoo is temporarily refusing requests. It must not call
+    this an authorization error.
+
+15. "What sectors can I filter NSE stocks by?"
+    Expect: the real sector labels from the snapshot (Technology,
+    Healthcare, Financial Services and so on), none invented.
