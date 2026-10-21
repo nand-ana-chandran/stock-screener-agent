@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 import time
 import uuid
@@ -19,7 +20,7 @@ MODEL = os.getenv("MODEL_NAME", "gemini-3.5-flash-lite")
 GUARD_LABEL = "on" if TOOL_GUARD else "off"
 SLEEP_SECONDS = 6            # pause between turns (raise it if you still hit API errors)
 RETRY_WAITS = [20, 40, 80]   # seconds to wait before each retry of a failed case
-VALID_TOOLS = {"simple_screener", "custom_screener", "company_snapshot"}
+VALID_TOOLS = {"simple_screener", "custom_screener", "company_snapshot", "india_screener"}
 
 # Tool defaults, so an omitted argument is judged as its default value
 DEFAULTS = {
@@ -69,7 +70,7 @@ def arg_ok(expected, actual):
     return expected == actual
 
 
-def check_turn(expected_calls, actual_calls):
+def check_turn(expected_calls, actual_calls, tool_call_limits=None):
     """Returns (tools_ok, args_ok, reasons). Tools are compared as a multiset (order ignored).
     Strict on purpose: an invalid tool name counts as a failure even if the agent recovered."""
     reasons = []
@@ -77,10 +78,31 @@ def check_turn(expected_calls, actual_calls):
     if invalid:
         reasons.append(f"INVALID TOOL NAME emitted: {invalid}")
 
+    tool_call_limits = tool_call_limits or {}
     exp_names = Counter(c["tool"] for c in expected_calls)
     act_names = Counter(c["name"] for c in actual_calls)
-    if exp_names != act_names:
-        reasons.append(f"tools expected {dict(exp_names)}, got {dict(act_names)}")
+    constrained_names = set(tool_call_limits)
+    exact_expected = Counter({
+        name: count for name, count in exp_names.items()
+        if name not in constrained_names
+    })
+    exact_actual = Counter({
+        name: count for name, count in act_names.items()
+        if name not in constrained_names
+    })
+    if exact_expected != exact_actual:
+        reasons.append(
+            f"tools expected {dict(exact_expected)}, got {dict(exact_actual)}"
+        )
+    for name, bounds in tool_call_limits.items():
+        count = act_names[name]
+        minimum = bounds.get("min", 0)
+        maximum = bounds.get("max")
+        if count < minimum or (maximum is not None and count > maximum):
+            reasons.append(
+                f"{name}: expected between {minimum} and {maximum} calls, got {count}"
+            )
+    if reasons:
         return False, False, reasons
 
     used = set()
@@ -90,14 +112,49 @@ def check_turn(expected_calls, actual_calls):
             if i in used or act["name"] != exp["tool"]:
                 continue
             merged = {**DEFAULTS.get(act["name"], {}), **act["args"]}
-            if all(arg_ok(v, merged.get(k)) for k, v in exp["args"].items()):
+            args_match = all(
+                arg_ok(value, merged.get(key))
+                for key, value in exp.get("args", {}).items()
+            )
+            alternatives = exp.get("any_args", [])
+            if alternatives:
+                args_match = args_match and any(
+                    all(arg_ok(value, merged.get(key)) for key, value in option.items())
+                    for option in alternatives
+                )
+            if args_match:
                 used.add(i)
                 matched = True
                 break
         if not matched:
             candidates = [a["args"] for a in actual_calls if a["name"] == exp["tool"]]
-            reasons.append(f"{exp['tool']}: no call matched {list(exp['args'])}; actual args: {candidates}")
+            constraint = exp.get("failure_message")
+            if constraint is None:
+                constraint = ", ".join(
+                    f"{key}={value if not callable(value) else 'required constraint'}"
+                    for key, value in exp.get("args", {}).items()
+                )
+            reasons.append(
+                f"{exp['tool']}: unmet constraint ({constraint}); actual args: {candidates}"
+            )
     return True, not reasons, reasons
+
+
+def check_answer(case, answer, tool_outputs=None):
+    reasons = []
+    for pattern in case.get("answer_must_include", []):
+        if callable(pattern):
+            pattern = pattern()
+        if re.search(pattern, answer, re.IGNORECASE | re.MULTILINE) is None:
+            reasons.append(f"answer did not match required pattern: {pattern}")
+    for pattern in case.get("answer_must_not_match", []):
+        if callable(pattern):
+            pattern = pattern()
+        if re.search(pattern, answer, re.IGNORECASE | re.MULTILINE):
+            reasons.append(f"answer matched forbidden pattern: {pattern}")
+    for check in case.get("answer_checks", []):
+        reasons.extend(check(answer, tool_outputs or []))
+    return reasons
 
 
 def run_case(case, rep):
@@ -114,7 +171,15 @@ def run_case(case, rep):
                 turn_result = run_turn(turn["prompt"], thread_id)
                 actual = turn_result["actual_calls"]
                 guard_delta = {k: GUARD_STATS[k] - before[k] for k in GUARD_STATS}
-                tools_ok, args_ok, reasons = check_turn(turn["calls"], actual)
+                tools_ok, args_ok, reasons = check_turn(
+                    turn["calls"], actual, case.get("tool_call_limits")
+                )
+                answer_reasons = check_answer(
+                    case,
+                    turn_result["final_text"],
+                    turn_result["tool_outputs"],
+                )
+                reasons.extend(answer_reasons)
                 tool_call_args = [call["args"] for call in actual]
                 rec.update(status="pass" if tools_ok and args_ok and not reasons else "fail",
                            actual_calls=actual, tools_ok=tools_ok, args_ok=args_ok,
@@ -186,28 +251,48 @@ def summarize(records, repeats):
         print("WARNING: the numbers above cover only completed turns. Report the error count with them.")
 
 
-def main():
-    # Usage:  python evals/eval.py [repeats] [case_id ...]
-    #   python evals/eval.py 3                        -> all cases, 3 repeats
-    #   python evals/eval.py 5 cheap_largecap_pe      -> only that case, 5 repeats
-    repeats = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    only = set(sys.argv[2:])
-
-    known = {c["id"] for c in CASES}
+def select_cases(case_list, only_ids=None, prefix=None):
+    known = {case["id"] for case in case_list}
+    only = set(only_ids or [])
     unknown = only - known
     if unknown:
-        print(f"Unknown case id(s): {sorted(unknown)}\nValid ids: {sorted(known)}")
-        return
-    cases = [c for c in CASES if not only or c["id"] in only]
+        raise ValueError(f"Unknown case id(s): {sorted(unknown)}")
+    if prefix and only:
+        raise ValueError("Use either case ids or --prefix, not both.")
+    selected = [
+        case for case in case_list
+        if (not only or case["id"] in only)
+        and (not prefix or case["id"].startswith(prefix))
+    ]
+    if prefix and not selected:
+        raise ValueError(f"No eval cases found with prefix {prefix!r}.")
+    return selected
 
-    tag = "_subset" if only else ""
+
+def main():
+    # Usage: python evals/eval.py [repeats] [case_id ...] [--prefix PREFIX]
+    #   python evals/eval.py 3 --prefix india_ -> all India cases, 3 repeats
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run stock screener evaluation cases.")
+    parser.add_argument("repeats", nargs="?", type=int, default=1)
+    parser.add_argument("case_ids", nargs="*")
+    parser.add_argument("--prefix", help="Run only cases whose id starts with this prefix.")
+    args = parser.parse_args()
+
+    try:
+        cases = select_cases(CASES, args.case_ids, args.prefix)
+    except ValueError as error:
+        parser.error(str(error))
+    subset = bool(args.case_ids or args.prefix)
+    tag = "_subset" if subset else ""
     out = (f"eval_results_{MODEL}_{CASES_MODULE}_guard{GUARD_LABEL}{tag}_"
            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-    print(f"Model: {MODEL} | tool guard: {GUARD_LABEL} | cases: {len(cases)} | repeats: {repeats}\n")
+    print(f"Model: {MODEL} | tool guard: {GUARD_LABEL} | cases: {len(cases)} | repeats: {args.repeats}\n")
 
     records, error_cases_in_a_row, stop = [], 0, False
     try:
-        for rep in range(repeats):
+        for rep in range(args.repeats):
             for case in cases:
                 case_records = run_case(case, rep)
                 for rec in case_records:
@@ -227,7 +312,7 @@ def main():
     except KeyboardInterrupt:
         print("\nInterrupted. Partial results are saved.")
 
-    summarize(records, repeats)
+    summarize(records, args.repeats)
     print(f"Saved {out}")
 
 

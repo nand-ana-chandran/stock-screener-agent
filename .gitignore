@@ -15,3 +15,6 @@ output.json
 eval_results_*.json
 
 .vscode/
+
+data/sample/
+data/*.tmp

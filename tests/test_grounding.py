@@ -45,4 +45,81 @@ assert result["ungrounded"] == [{
     "context": "The price is $312.55",
 }]
 
+result = check_grounding(
+    "The market cap is ₹1,62,660 crore",
+    ["Market cap: ₹1,62,660 crore"],
+    "",
+)
+assert result["ungrounded"] == []
+
+result = check_grounding(
+    "Cash is USD 1,62,660",
+    ["Cash: USD 1,62,660"],
+    "",
+)
+assert result["ungrounded"] == []
+
+result = check_grounding(
+    "The valuation is ₹1.2 lakh crore",
+    ["Valuation: ₹1.2 lakh crore"],
+    "",
+)
+assert result["ungrounded"] == []
+
+result = check_grounding(
+    "The market cap is ₹16.27 lakh crore",
+    ["Market cap: 16266032054272"],
+    "",
+)
+assert result["ungrounded"] == []
+
+result = check_grounding(
+    "The market cap is ₹1.63 lakh crore",
+    ["Market cap: 16266032054272"],
+    "",
+)
+assert [item["text"] for item in result["ungrounded"]] == ["₹1.63 lakh crore"]
+
+result = check_grounding(
+    "The market cap is ₹1,70,000 crore",
+    ["Market cap: ₹1,62,660 crore"],
+    "",
+)
+assert [item["text"] for item in result["ungrounded"]] == ["₹1,70,000 crore"]
+
+result = check_grounding(
+    "Cash is USD 1,63,660",
+    ["Cash: USD 1,62,660"],
+    "",
+)
+assert [item["text"] for item in result["ungrounded"]] == ["1,63,660"]
+
+result = check_grounding(
+    "11. Revenue: 12.5%\n12) Market cap: ₹16.27 lakh crore",
+    ["Revenue: 12.5%; Market cap: ₹16.27 lakh crore"],
+    "",
+)
+assert result["ungrounded"] == []
+
+result = check_grounding(
+    "11. Revenue: 99.9%",
+    ["Revenue: 12.5%"],
+    "",
+)
+assert [item["text"] for item in result["ungrounded"]] == ["99.9%"]
+
+result = check_grounding(
+    "One 97 Communications has a market cap of ₹1,62,660 crore",
+    ['{"name": "One 97 Communications", "market_cap": "₹1,62,660 crore"}'],
+    "",
+)
+assert result["ungrounded"] == []
+
+result = check_grounding(
+    "One 97 Communications has a market cap of ₹1,70,000 crore",
+    ['{"name": "One 97 Communications", "market_cap": "₹1,62,660 crore"}'],
+    "",
+)
+assert [item["text"] for item in result["ungrounded"]] == ["₹1,70,000 crore"]
+
 print("All grounding tests passed.")

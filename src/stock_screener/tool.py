@@ -7,6 +7,13 @@ from langchain.tools import tool
 import yfinance as yf
 from yfinance import EquityQuery
 
+from .india_data import (
+    RUPEES_PER_CRORE,
+    format_money,
+    get_snapshot_date,
+    load_snapshot,
+)
+
 
 def fmt_money(n, currency="USD"):
     """1540230144 -> '$1.54B'; for other currencies -> 'BRL 287.43B'."""
@@ -93,6 +100,8 @@ def simple_screener(screen_type: str, offset: int = 0, limit: int = 25) -> str:
     Returns a predefined screened list. The 'most_actives' screen is ranked locally by
     daily trading volume, highest first; other predefined screens are not ranked.
     Prefer custom_screener when the user wants a market cap range or sector.
+    This tool is for US predefined screens only. For Indian companies, NSE symbols,
+    or rupee questions, use india_screener; never pass NSE symbols here.
     IMPORTANT: some screens return individual STOCKS and some return mutual FUNDS or bond
     funds. Choose by what the user is asking about. If the user asks for stocks or
     companies, never use a FUND screen. Use a FUND screen only when the user asks for
@@ -229,6 +238,7 @@ def custom_screener(
 ) -> str:
     """
     Screens US-listed stocks (NYSE/Nasdaq/AMEX) with custom filters and a real sort order.
+    For Indian companies, NSE symbols, or rupee questions, use india_screener instead.
     Use this when the user wants a market cap range, a sector, or a ranking
     (for example 'top small-cap tech gainers today').
 
@@ -407,6 +417,9 @@ def company_snapshot(symbol: str) -> str:
     Use this when the user asks about a specific ticker or company
     (for example 'tell me about NVDA' or 'any news on XNDU?').
     Do not use it to list or rank many stocks; use the screeners for that.
+    This is for US-listed tickers only. Never pass an NSE symbol here, even if it
+    also exists as a US ADR; use india_screener for Indian companies, NSE symbols,
+    or rupee questions.
 
     Args:
         symbol: the stock ticker, for example 'NVDA' or 'AAPL'.
@@ -497,6 +510,398 @@ def company_snapshot(symbol: str) -> str:
     data["recent_headlines"] = headlines
 
     return "Company snapshot:\n" + json.dumps(data, indent=2)
+
+
+INDIA_SORT_FIELDS = {
+    "market_cap": "market_cap",
+    "trailing_pe": "trailing_pe",
+    "total_cash": "total_cash",
+    "total_debt": "total_debt",
+    "profit_margin": "profit_margin",
+    "revenue_growth": "revenue_growth",
+    "price": "price",
+    "sector": "sector",
+    "industry": "industry",
+}
+
+
+@tool
+def india_screener(
+    symbol: str | None = None,
+    company_name: str | None = None,
+    min_market_cap_crore: float | None = None,
+    max_market_cap_crore: float | None = None,
+    sector: str | None = None,
+    industry: str | None = None,
+    financial_currency: str | None = None,
+    min_trailing_pe: float | None = None,
+    max_trailing_pe: float | None = None,
+    min_profit_margin: float | None = None,
+    min_revenue_growth: float | None = None,
+    sort_by: str = "market_cap",
+    sort_order: str = "desc",
+    limit: int = 10,
+    offset: int = 0,
+) -> str:
+    """Filter and sort Indian company fundamentals from the local NSE snapshot.
+
+    Use only for requests about India, NSE, Nifty, Indian companies, or rupees.
+    This tool reads the saved snapshot and never fetches live data.
+    Indian companies and NSE symbols must use this tool, not company_snapshot or
+    the US screeners. Real sector values include Technology, Healthcare,
+    Financial Services, Consumer Cyclical, Consumer Defensive, Industrials,
+    Energy, Utilities, Real Estate, Basic Materials, and Communication Services.
+    For "tech", "technology", or "technology sector", use sector="Technology".
+    Pass industry="IT" only for IT-related wording such as "IT", "IT companies",
+    "IT sector", or "IT services". This covers Information Technology Services
+    and software industries, including TCS, Infosys, Wipro, and HCLTech.
+    "software" alone covers software industries only.
+
+    Args:
+        symbol: Optional NSE symbol with or without .NS, matched case-insensitively.
+        company_name: Optional case-insensitive substring of the company name.
+        min_market_cap_crore: Optional minimum market cap in INR crore.
+        max_market_cap_crore: Optional maximum market cap in INR crore.
+        sector: Optional sector substring; use "Technology" for tech, technology,
+            or technology sector requests.
+        industry: Optional case-insensitive industry substring; pass "IT" only for
+            IT-related wording (IT companies/sector/services), "software" for software
+            industries only, pharma for Drug Manufacturers, and banks for Banks.
+        financial_currency: Optional financial statement currency, INR or USD.
+        min_trailing_pe: Optional minimum trailing P/E.
+        max_trailing_pe: Optional maximum trailing P/E.
+        min_profit_margin: Optional minimum profit margin in percentage points (10 means 10%).
+        min_revenue_growth: Optional minimum revenue growth in percentage points (10 means 10%).
+        sort_by: One of market_cap, trailing_pe, total_cash, total_debt,
+            profit_margin, revenue_growth, price, sector, industry.
+        sort_order: "asc" or "desc".
+        limit: Maximum rows to return; defaults to 10.
+        offset: Number of matching rows to skip.
+
+    Returns:
+        JSON containing snapshot_date, total_matches, excluded_missing_data, and rows.
+        Money fields carry their quote or financial currency labels. If a requested
+        sector or industry returns no matches, the response includes the valid values
+        present in the snapshot. When cash or debt sorting matches multiple financial
+        currencies, currency_groups and note report the per-currency counts and explain
+        that rows are ranked only within each currency; the note directs the caller to
+        use financial_currency to view another group.
+    """
+    if sort_by not in INDIA_SORT_FIELDS:
+        return f"Unknown sort_by '{sort_by}'. Valid options: {', '.join(INDIA_SORT_FIELDS)}"
+    if sort_order not in ("asc", "desc"):
+        return "sort_order must be 'asc' or 'desc'."
+    if limit < 1:
+        return "limit must be a positive integer."
+    if offset < 0:
+        return "offset must be zero or greater."
+    sector_filter = sector.strip() if sector else None
+    industry_filter = industry.strip() if industry else None
+    it_aliases = {"it", "it companies", "it services", "it services companies"}
+    it_industry_filter = False
+    if sector_filter and sector_filter.casefold() in it_aliases:
+        sector_filter = None
+        it_industry_filter = True
+    elif sector_filter and sector_filter.casefold() == "pharma":
+        sector_filter = None
+        industry_filter = "Drug Manufacturers"
+    elif sector_filter and sector_filter.casefold() == "banks":
+        sector_filter = None
+        industry_filter = "Banks"
+    if industry_filter and industry_filter.casefold() in it_aliases:
+        industry_filter = None
+        it_industry_filter = True
+    elif industry_filter and industry_filter.casefold() == "pharma":
+        industry_filter = "Drug Manufacturers"
+    elif industry_filter and industry_filter.casefold() == "banks":
+        industry_filter = "Banks"
+    if financial_currency is not None:
+        financial_currency = financial_currency.strip().upper()
+        if financial_currency not in {"INR", "USD"}:
+            return "financial_currency must be 'INR' or 'USD'."
+    normalized_symbol = symbol.strip().upper() if symbol else None
+    if normalized_symbol:
+        normalized_symbol = normalized_symbol.removesuffix(".NS")
+        normalized_symbol = f"{normalized_symbol}.NS"
+    name_filter = company_name.strip().casefold() if company_name else None
+
+    try:
+        snapshot = load_snapshot()
+    except (OSError, ValueError, TypeError, AttributeError):
+        return (
+            "India data unavailable: the India snapshot could not be loaded. "
+            "Build or restore it with scripts/refresh_india.py."
+        )
+    tickers = snapshot.get("tickers", {})
+    requested_filters = {
+        "market_cap": (
+            (min_market_cap_crore is not None and min_market_cap_crore > 0)
+            or max_market_cap_crore is not None
+        ),
+        "sector": sector_filter is not None,
+        "industry": industry_filter is not None or it_industry_filter,
+        "financial_currency": financial_currency is not None,
+        "trailing_pe": min_trailing_pe is not None or max_trailing_pe is not None,
+        "profit_margin": min_profit_margin is not None,
+        "revenue_growth": min_revenue_growth is not None,
+        "name": name_filter is not None,
+    }
+    required_fields = {field for field, requested in requested_filters.items() if requested}
+    sort_field = INDIA_SORT_FIELDS[sort_by]
+    required_fields.add(sort_field)
+    if sort_field in {"total_cash", "total_debt"}:
+        required_fields.add("financial_currency")
+    excluded_missing_data = snapshot.get("skipped_ticker_count", 0)
+    matches = []
+
+    for ticker_symbol, record in tickers.items():
+        normalized_record_symbol = ticker_symbol.upper().removesuffix(".NS") + ".NS"
+        if normalized_symbol and normalized_record_symbol != normalized_symbol:
+            continue
+        if record.get("status") in ("failed", "skipped"):
+            excluded_missing_data += 1
+            continue
+        values = {
+            key: record.get(key)
+            for key in (
+                "market_cap", "sector", "industry", "trailing_pe",
+                "profit_margin", "revenue_growth", "price",
+                "name", "total_cash", "total_debt",
+                "financial_currency",
+            )
+        }
+        quote_currency = record.get("quote_currency")
+        if (
+            "market_cap" in required_fields
+            and (quote_currency or "").upper() != "INR"
+        ):
+            values["market_cap"] = None
+        missing_fields = {
+            field
+            for field in required_fields
+            if values[field] is None
+            or (
+                field in {
+                    "market_cap", "trailing_pe", "profit_margin",
+                    "revenue_growth", "price", "total_cash", "total_debt",
+                }
+                and (
+                    isinstance(values[field], bool)
+                    or not isinstance(values[field], (int, float))
+                )
+            )
+            or (
+                field in {"sector", "industry", "name"}
+                and not isinstance(values[field], str)
+            )
+            or (
+                field == "financial_currency"
+                and not isinstance(values[field], str)
+            )
+        }
+
+        market_cap_crore = (
+            values["market_cap"] / RUPEES_PER_CRORE
+            if values["market_cap"] is not None
+            and (quote_currency or "").upper() == "INR"
+            else None
+        )
+        profit_margin_pct = (
+            values["profit_margin"] * 100
+            if values["profit_margin"] is not None
+            else None
+        )
+        revenue_growth_pct = (
+            values["revenue_growth"] * 100
+            if values["revenue_growth"] is not None
+            else None
+        )
+        if (
+            "market_cap" not in missing_fields
+            and min_market_cap_crore is not None
+            and min_market_cap_crore > 0
+            and market_cap_crore < min_market_cap_crore
+        ):
+            continue
+        if (
+            "market_cap" not in missing_fields
+            and max_market_cap_crore is not None
+            and market_cap_crore > max_market_cap_crore
+        ):
+            continue
+        if (
+            "sector" not in missing_fields
+            and sector_filter is not None
+            and sector_filter.casefold() not in values["sector"].casefold()
+        ):
+            continue
+        if (
+            "industry" not in missing_fields
+            and industry_filter is not None
+            and industry_filter.casefold() not in values["industry"].casefold()
+        ):
+            continue
+        if "industry" not in missing_fields and it_industry_filter:
+            industry_value = values["industry"].casefold()
+            if not (
+                industry_value == "information technology services"
+                or industry_value.startswith("software")
+            ):
+                continue
+        if name_filter is not None and "name" not in missing_fields:
+            company = values["name"]
+            if name_filter not in company.casefold():
+                continue
+        if (
+            "trailing_pe" not in missing_fields
+            and min_trailing_pe is not None
+            and values["trailing_pe"] < min_trailing_pe
+        ):
+            continue
+        if (
+            "trailing_pe" not in missing_fields
+            and max_trailing_pe is not None
+            and values["trailing_pe"] > max_trailing_pe
+        ):
+            continue
+        if (
+            "profit_margin" not in missing_fields
+            and min_profit_margin is not None
+            and profit_margin_pct < min_profit_margin
+        ):
+            continue
+        if (
+            "revenue_growth" not in missing_fields
+            and min_revenue_growth is not None
+            and revenue_growth_pct < min_revenue_growth
+        ):
+            continue
+        if (
+            "financial_currency" not in missing_fields
+            and financial_currency is not None
+            and values["financial_currency"].upper() != financial_currency
+        ):
+            continue
+        if missing_fields:
+            excluded_missing_data += 1
+            continue
+
+        record_for_sort = {
+            **values,
+            "market_cap": market_cap_crore,
+            "profit_margin": profit_margin_pct,
+            "revenue_growth": revenue_growth_pct,
+        }
+        matches.append((ticker_symbol, record, record_for_sort))
+
+    descending = sort_order == "desc"
+    if sort_field in {"total_cash", "total_debt"}:
+        currency_groups = {}
+        for match in matches:
+            currency = match[1]["financial_currency"].upper()
+            currency_groups.setdefault(currency, []).append(match)
+        matches = []
+        for currency in sorted(currency_groups):
+            matches.extend(sorted(
+                currency_groups[currency],
+                key=lambda item: item[2][sort_field],
+                reverse=descending,
+            ))
+    else:
+        matches.sort(
+            key=lambda item: (
+                item[2][sort_field].casefold()
+                if isinstance(item[2][sort_field], str)
+                else item[2][sort_field]
+            ),
+            reverse=descending,
+        )
+    total_matches = len(matches)
+    page = matches[offset:offset + limit]
+    rows = []
+    for symbol, record, _ in page:
+        quote_currency = record.get("quote_currency")
+        financial_currency = record.get("financial_currency")
+        rows.append({
+            "symbol": symbol,
+            "name": record.get("name"),
+            "market_cap": format_money(record.get("market_cap"), quote_currency),
+            "price": format_money(record.get("price"), quote_currency, scale_inr=False),
+            "trailing_pe": fmt_num(record.get("trailing_pe")),
+            "sector": record.get("sector"),
+            "industry": record.get("industry"),
+            "fifty_two_week_low": format_money(
+                record.get("fifty_two_week_low"), quote_currency, scale_inr=False
+            ),
+            "fifty_two_week_high": format_money(
+                record.get("fifty_two_week_high"), quote_currency, scale_inr=False
+            ),
+            "revenue_growth": fmt_pct(record.get("revenue_growth")),
+            "profit_margin": fmt_pct(record.get("profit_margin")),
+            "total_cash": format_money(record.get("total_cash"), financial_currency),
+            "total_debt": format_money(record.get("total_debt"), financial_currency),
+            "quote_currency": quote_currency,
+            "financial_currency": financial_currency,
+        })
+
+    response = {
+        "snapshot_date": get_snapshot_date(snapshot),
+        "total_matches": total_matches,
+        "excluded_missing_data": excluded_missing_data,
+        "rows": rows,
+    }
+    if sort_field in {"total_cash", "total_debt"}:
+        response["sort_note"] = (
+            "Sorted within each financial currency; amounts in different currencies "
+            "are not compared."
+        )
+        if len(currency_groups) > 1:
+            group_counts = {
+                currency: len(group)
+                for currency, group in sorted(currency_groups.items())
+            }
+            response["currency_groups"] = group_counts
+            ranked_currency = "INR" if "INR" in currency_groups else next(
+                iter(sorted(currency_groups))
+            )
+            excluded_groups = [
+                (currency, group)
+                for currency, group in sorted(currency_groups.items())
+                if currency != ranked_currency
+            ]
+            excluded_descriptions = []
+            for currency, group in excluded_groups:
+                description = f"{currency} ({len(group)})"
+                if len(group) <= 5:
+                    symbols = ", ".join(match[0] for match in group)
+                    description += f": {symbols}"
+                excluded_descriptions.append(description)
+            response["note"] = (
+                f"Rows reporting in {ranked_currency} ({len(currency_groups[ranked_currency])}) "
+                "are ranked within that currency "
+                "only. Rows in other currency groups are excluded from this ranking: "
+                + "; ".join(excluded_descriptions)
+                + ". Use "
+                + " or ".join(
+                    f'financial_currency="{currency}"'
+                    for currency, _ in excluded_groups
+                )
+                + " to see those groups."
+            )
+    if total_matches == 0 and (sector_filter is not None or industry_filter is not None):
+        response["available_sectors"] = sorted({
+            record["sector"]
+            for record in tickers.values()
+            if record.get("status") not in ("failed", "skipped")
+            and isinstance(record.get("sector"), str)
+        })
+        response["available_industries"] = sorted({
+            record["industry"]
+            for record in tickers.values()
+            if record.get("status") not in ("failed", "skipped")
+            and isinstance(record.get("industry"), str)
+        })
+    return json.dumps(response, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from langgraph.prebuilt import ToolNode
 from langchain_google_genai import ChatGoogleGenerativeAI
 from colorama import Fore
 
-from .tool import simple_screener, custom_screener, company_snapshot
+from .tool import simple_screener, custom_screener, company_snapshot, india_screener
 
 llm = ChatGoogleGenerativeAI(
     model=os.getenv("MODEL_NAME", "gemini-3.5-flash-lite"),
@@ -18,14 +18,31 @@ llm = ChatGoogleGenerativeAI(
     max_retries=1,
 )
 
-tools = [simple_screener, custom_screener, company_snapshot]
+tools = [simple_screener, custom_screener, company_snapshot, india_screener]
 
 llm_with_tools = llm.bind_tools(tools)
 
 tool_node = ToolNode(tools)
 
 SYSTEM_PROMPT = (
-    "You are a stock screening assistant. Use custom_screener whenever the user "
+    "You are a stock screening assistant. For any Indian company, NSE symbol, "
+    "India-specific or rupee question, use india_screener only. Never send an NSE "
+    "symbol to company_snapshot, simple_screener, or custom_screener, even when the "
+    "same company also trades as a US ADR (for example INFY or HDB). For all other "
+    "requests, use the US tools. "
+    "Use india_screener's symbol filter for one Indian company. For India queries, "
+    "never call a US tool as a fallback if the snapshot has no match. "
+    "For 'tech', 'technology', or 'technology sector' requests, call india_screener "
+    "with sector='Technology'. Use industry='IT' only when the user says IT, IT "
+    "companies, IT sector, or IT services; this covers Information Technology "
+    "Services and software industries, including TCS, Infosys, Wipro, and HCLTech. "
+    "Use industry='software' for software industries only. "
+    "When sorting total cash or debt, the results are grouped and sorted within "
+    "each financial currency; never compare or rank amounts across currencies. "
+    "If an India screener result includes currency_groups or its multi-currency note, "
+    "state that rows reporting in other currencies are not ranked in this ranking, "
+    "naming each currency group and its count. Never merge those groups into one ranking. "
+    "For US stocks, use custom_screener whenever the user "
     "wants a ranking, a market cap range, or a sector. Treat 'small-cap' as "
     "min_market_cap_millions=300 and max_market_cap_millions=2000 unless the user "
     "specifies different bounds. When ranking by percent change, "
@@ -40,7 +57,7 @@ SYSTEM_PROMPT = (
     "When ranking by any field, preserve the requested order and report the rows in the order returned by the tool. "
     "For custom_screener, set limit to the number requested (for example, limit=10 for 'top 10'); "
     "the default is five when no count is specified. "
-    "For company comparisons, call company_snapshot for each requested ticker and include every metric "
+    "For US company comparisons, call company_snapshot for each requested ticker and include every metric "
     "the user explicitly requested; for current prices and daily percentage changes, report both fields "
     "for each company and do not substitute P/E or analyst ratings for daily change. "
     "Use simple_screener for classic predefined lists such as most actives, mutual funds, "
@@ -51,8 +68,12 @@ SYSTEM_PROMPT = (
     "For simple_screener, pass the requested result count as limit (for example, limit=10 for 'top 10'). "
     "Use the fewest tool calls that answer the request: one custom_screener call returns the requested "
     "number of results when available; use offset only for a requested next page. "
-    "Call company_snapshot once per company the user names or selects. "
-    "Use company_snapshot when the user asks about one specific company or ticker. "
+    "Call company_snapshot once per US company the user names or selects. "
+    "Use company_snapshot when the user asks about one specific US company or ticker; for Indian "
+    "companies and NSE tickers, use india_screener instead. "
+    "Always state the snapshot date for India snapshot answers. "
+    "Never compare values in different currencies. If a value is labeled USD while the "
+    "market cap is in INR, say so instead of comparing them. "
     "A headline with a note field is a general market headline; label it that way. "
     "Report only data returned by the tools; never invent prices, tickers or headlines. "
     "Money amounts and percentages arrive already formatted; copy them exactly and never add raw decimals. "
