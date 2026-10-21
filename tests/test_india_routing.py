@@ -45,6 +45,13 @@ class TestIndiaRoutingGuidance(unittest.TestCase):
         self.assertIn("companies with '<text>' in the name", prompt)
         self.assertIn("state the resolved sector and/or industry labels used", prompt)
         self.assertIn("consumer defensive for fmcg", prompt)
+        self.assertIn("uses max_price=100", prompt)
+        self.assertIn("state the total number of matches", prompt)
+        self.assertIn("debt-free match count", prompt)
+        self.assertIn("how many rows lacked debt data", prompt)
+        self.assertIn("never describe companies with low debt as debt-free", prompt)
+        self.assertIn("sort by pct_above_52w_low", prompt)
+        self.assertIn("sorting by price does not answer proximity", prompt)
 
     def test_tool_descriptions_distinguish_india_from_us_tools(self):
         india_description = india_screener.description.casefold()
@@ -60,6 +67,11 @@ class TestIndiaRoutingGuidance(unittest.TestCase):
         self.assertIn("tcs, infosys, wipro, and hcltech", india_description)
         self.assertIn('"software" alone covers software industries', india_description)
         self.assertIn("financial_currency", india_description)
+        self.assertIn("max_price=100", india_description)
+        self.assertIn("quote_currency=\"inr\"", india_description)
+        self.assertIn("debt_free=true", india_description)
+        self.assertIn("excluded_by_field", india_description)
+        self.assertIn("pct_above_52w_low", india_description)
         for tool in (company_snapshot, custom_screener, simple_screener):
             description = tool.description.casefold()
             self.assertIn("india_screener", description)

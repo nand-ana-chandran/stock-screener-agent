@@ -225,6 +225,203 @@ class TestIndiaScreener(unittest.TestCase):
         self.assertEqual(result["rows"][0]["symbol"], "AAA.NS")
         self.assertEqual(result["excluded_missing_data"], 0)
 
+    def test_real_bagmane_lookup_returns_partial_row_with_unavailable_values(self):
+        snapshot = {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "BAGMANE.NS": {
+                    "status": "partial",
+                    "name": None,
+                    "price": None,
+                    "market_cap": None,
+                    "trailing_pe": None,
+                    "sector": None,
+                    "industry": None,
+                    "revenue_growth": None,
+                    "profit_margin": None,
+                    "total_cash": None,
+                    "total_debt": None,
+                    "quote_currency": None,
+                    "financial_currency": "INR",
+                    "fifty_two_week_low": None,
+                    "fifty_two_week_high": None,
+                },
+            },
+        }
+        result = self._invoke({"symbol": "BAGMANE.NS"}, snapshot)
+
+        self.assertEqual(result["total_matches"], 1)
+        self.assertEqual(result["excluded_missing_data"], 0)
+        row = result["rows"][0]
+        self.assertEqual(row["symbol"], "BAGMANE.NS")
+        for field in (
+            "name", "market_cap", "price", "trailing_pe", "sector", "industry",
+            "fifty_two_week_low", "fifty_two_week_high", "revenue_growth",
+            "profit_margin", "total_cash", "total_debt", "quote_currency",
+        ):
+            self.assertEqual(row[field], "unavailable", field)
+        self.assertEqual(row["financial_currency"], "INR")
+
+    def test_company_name_lookup_keeps_row_missing_default_sort_value(self):
+        snapshot = {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "LOOKUP.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "name": "Lookup Company",
+                    "market_cap": None,
+                    "quote_currency": None,
+                },
+            },
+        }
+        result = self._invoke({"company_name": "lookup"}, snapshot)
+
+        self.assertEqual(result["total_matches"], 1)
+        self.assertEqual(result["excluded_missing_data"], 0)
+        self.assertEqual(result["rows"][0]["market_cap"], "unavailable")
+
+    def test_price_filters_only_include_inr_quote_rows_and_count_unavailable(self):
+        snapshot = {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "UNDER.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "price": 99,
+                    "quote_currency": "INR",
+                },
+                "OVER.NS": {
+                    **SNAPSHOT["tickers"]["BBB.NS"],
+                    "price": 101,
+                    "quote_currency": "INR",
+                },
+                "USD.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "price": 50,
+                    "quote_currency": "USD",
+                },
+                "NO_CURRENCY.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "price": 50,
+                    "quote_currency": None,
+                },
+                "NO_PRICE.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "price": None,
+                    "quote_currency": "INR",
+                },
+            },
+        }
+        result = self._invoke({
+            "max_price": 100,
+            "sort_by": "sector",
+        }, snapshot)
+
+        self.assertEqual(result["total_matches"], 1)
+        self.assertEqual([row["symbol"] for row in result["rows"]], ["UNDER.NS"])
+        self.assertEqual(result["excluded_missing_data"], 3)
+
+    def test_pct_above_52_week_low_sort_uses_relative_distance_and_counts_missing(self):
+        snapshot = {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "CHEAP_FAR.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "price": 10,
+                    "fifty_two_week_low": 2,
+                },
+                "COSTLY_NEAR.NS": {
+                    **SNAPSHOT["tickers"]["BBB.NS"],
+                    "price": 100,
+                    "fifty_two_week_low": 95,
+                },
+                "BAD_LOW.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "fifty_two_week_low": 0,
+                },
+                "NO_PRICE.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "price": None,
+                },
+                "PRICE_BELOW_LOW.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "price": 85,
+                    "fifty_two_week_low": 100,
+                },
+            },
+        }
+        result = self._invoke({
+            "sort_by": "pct_above_52w_low",
+            "sort_order": "asc",
+        }, snapshot)
+
+        self.assertEqual(result["total_matches"], 2)
+        self.assertEqual(
+            [row["symbol"] for row in result["rows"]],
+            ["COSTLY_NEAR.NS", "CHEAP_FAR.NS"],
+        )
+        self.assertEqual(result["rows"][0]["pct_above_52w_low"], "5.26%")
+        self.assertEqual(result["rows"][1]["pct_above_52w_low"], "400.00%")
+        self.assertEqual(result["excluded_missing_data"], 2)
+        self.assertEqual(
+            result["excluded_by_field"]["price_vs_52w_low"],
+            1,
+        )
+        self.assertIn(
+            "Excluded 1 row(s) with price below the 52-week low",
+            result["note"],
+        )
+        self.assertNotIn(
+            "PRICE_BELOW_LOW.NS",
+            [row["symbol"] for row in result["rows"]],
+        )
+
+    def test_debt_free_filter_counts_missing_debt_only_after_other_filters(self):
+        snapshot = {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "DEBT_FREE.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "industry": "Banks",
+                    "total_debt": 0,
+                },
+                "NO_DEBT.NS": {
+                    **SNAPSHOT["tickers"]["BBB.NS"],
+                    "industry": "Banks",
+                    "total_debt": None,
+                },
+                "OTHER_NO_DEBT.NS": {
+                    **SNAPSHOT["tickers"]["BBB.NS"],
+                    "industry": "Software",
+                    "total_debt": None,
+                },
+            },
+        }
+        result = self._invoke({
+            "industry": "Banks",
+            "debt_free": True,
+            "sort_by": "sector",
+        }, snapshot)
+
+        self.assertEqual(result["total_matches"], 1)
+        self.assertEqual(result["debt_free_count"], 1)
+        self.assertEqual(result["excluded_by_field"], {"total_debt": 1})
+        self.assertEqual(result["excluded_missing_data"], 0)
+        self.assertEqual([row["symbol"] for row in result["rows"]], ["DEBT_FREE.NS"])
+
+        complete = self._invoke({
+            "debt_free": True,
+            "sort_by": "sector",
+        }, {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "COMPLETE.NS": {
+                    **SNAPSHOT["tickers"]["AAA.NS"],
+                    "total_debt": 0,
+                },
+            },
+        })
+        self.assertEqual(complete["excluded_by_field"], {"total_debt": 0})
+
     def test_missing_sort_data_counts_only_after_other_filters_pass(self):
         snapshot = {
             "snapshot_date": "2026-10-20",

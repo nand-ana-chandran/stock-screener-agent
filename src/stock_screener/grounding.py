@@ -23,9 +23,18 @@ SUFFIX_MULTIPLIERS = {
     "lakh crore": 1_000_000_000_000,
 }
 TIME_HYPHEN_PATTERN = re.compile(r"-(?:week|day|month|year)s?\b", re.IGNORECASE)
+RANK_RANGE_PATTERN = re.compile(
+    r"\b(?:ranks?|positions?)\s+(\d+)\s*(?:to|[-–])\s*(\d+)\b",
+    re.IGNORECASE,
+)
 
 
 def _extract_numbers(text, ignored_spans=()):
+    rank_range_spans = {
+        span
+        for range_match in RANK_RANGE_PATTERN.finditer(text)
+        for span in (range_match.span(1), range_match.span(2))
+    }
     for match in NUMBER_PATTERN.finditer(text):
         token = match.group().strip()
         value_text = token.replace("$", "").replace("₹", "").replace(",", "")
@@ -57,6 +66,7 @@ def _extract_numbers(text, ignored_spans=()):
             match.start() < end and start < match.end()
             for start, end in ignored_spans
         )
+        rank_range_number = (match.start(), match.end()) in rank_range_spans
         line_start = text.rfind("\n", 0, match.start()) + 1
         ordered_list_marker = (
             not text[line_start:match.start()].strip()
@@ -73,6 +83,7 @@ def _extract_numbers(text, ignored_spans=()):
                 or time_hyphen_unit
                 or ordered_list_marker
                 or part_of_company_name
+                or rank_range_number
             ),
         }
 

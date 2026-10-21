@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 import streamlit as st
@@ -82,6 +83,8 @@ if limit_reached:
 EXAMPLES = [
     "Top small cap tech gainers today",
     "Largest healthcare companies by market cap",
+    "Largest NSE banks by market cap",
+    "Infosys cash vs market cap",
     "Tell me about NVDA",
     "Compare ZS and XP",
     "Show me the top mutual funds by today's % change",
@@ -135,13 +138,14 @@ if prompt and not limit_reached:
             answer = msgs[-1].text
         except Exception as e:
             tools_used = []
+            logging.exception("Chat request failed")
             if is_quota_error(e):
                 answer = (
                     "The AI service has reached its usage quota. "
                     "Please try again later."
                 )
             else:
-                answer = f"Something went wrong: {e}"
+                answer = "Something went wrong. Please try again."
 
         st.markdown(safe(answer))
         if tools_used:

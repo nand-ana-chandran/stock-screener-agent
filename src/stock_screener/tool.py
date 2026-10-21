@@ -562,6 +562,7 @@ INDIA_SORT_FIELDS = {
     "price": "price",
     "sector": "sector",
     "industry": "industry",
+    "pct_above_52w_low": "pct_above_52w_low",
 }
 
 
@@ -571,9 +572,12 @@ def india_screener(
     company_name: str | None = None,
     min_market_cap_crore: float | None = None,
     max_market_cap_crore: float | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
     sector: str | None = None,
     industry: str | None = None,
     financial_currency: str | None = None,
+    debt_free: bool = False,
     min_trailing_pe: float | None = None,
     max_trailing_pe: float | None = None,
     min_profit_margin: float | None = None,
@@ -588,6 +592,14 @@ def india_screener(
     Use only for requests about India, NSE, Nifty, Indian companies, or rupees.
     This tool reads the saved snapshot and never fetches live data.
     revenue_growth is latest-quarter YoY revenue growth (Yahoo).
+    Price filters are in INR and only include rows with quote_currency="INR";
+    "below 100 rupees" uses max_price=100.
+    debt_free=True returns total_debt == 0 and reports missing debt in
+    excluded_by_field.total_debt.
+    Sort by pct_above_52w_low (price / fifty_two_week_low - 1) to rank proximity
+    to the 52-week low; sorting by price is not a substitute.
+    Rows with price below their 52-week low are excluded from this sort as
+    inconsistent Yahoo data and counted in excluded_by_field.price_vs_52w_low.
     Indian companies and NSE symbols must use this tool, not company_snapshot or
     the US screeners. Real sector values include Technology, Healthcare,
     Financial Services, Consumer Cyclical, Consumer Defensive, Industrials,
@@ -599,30 +611,42 @@ def india_screener(
     "software" alone covers software industries only.
     This tool cannot compare two fields for a row; sorting by total_debt does not
     identify companies whose debt exceeds their cash.
+    debt_free=True returns only rows with total_debt equal to zero. Missing debt is
+    reported separately in excluded_by_field.
 
     Args:
         symbol: Optional NSE symbol with or without .NS, matched case-insensitively.
         company_name: Optional case-insensitive substring of the company name.
         min_market_cap_crore: Optional minimum market cap in INR crore.
         max_market_cap_crore: Optional maximum market cap in INR crore.
+        min_price: Optional minimum quote price in INR.
+        max_price: Optional maximum quote price in INR.
         sector: Optional sector substring; use "Technology" for tech, technology,
             or technology sector requests.
         industry: Optional case-insensitive industry substring; pass "IT" only for
             IT-related wording (IT companies/sector/services), "software" for software
             industries only, pharma for Drug Manufacturers, and banks for Banks.
         financial_currency: Optional financial statement currency, INR or USD.
+        debt_free: If true, include rows with total_debt equal to zero only.
         min_trailing_pe: Optional minimum trailing P/E.
         max_trailing_pe: Optional maximum trailing P/E.
         min_profit_margin: Optional minimum profit margin in percentage points (10 means 10%).
         min_revenue_growth: Optional minimum revenue growth in percentage points (10 means 10%).
         sort_by: One of market_cap, trailing_pe, total_cash, total_debt,
-            profit_margin, revenue_growth, price, sector, industry.
+            profit_margin, revenue_growth, price, sector, industry,
+            pct_above_52w_low (price / fifty_two_week_low - 1).
         sort_order: "asc" or "desc".
         limit: Maximum rows to return; defaults to 10.
         offset: Number of matching rows to skip.
 
     Returns:
         JSON containing snapshot_date, total_matches, excluded_missing_data, and rows.
+        For debt_free queries, debt_free_count gives the returned match count and
+        excluded_by_field.total_debt counts rows missing debt data. When total_matches
+        exceeds the requested page size, use total_matches to report the full count.
+        A pct_above_52w_low sort excludes rows missing price or 52-week low, or with a
+        low at or below zero. It also excludes rows where price is below the 52-week
+        low, reporting that count and note in excluded_by_field and note.
         Money fields carry their quote or financial currency labels. If a requested
         revenue_growth is latest-quarter YoY revenue growth (Yahoo); values above 50%
         or below -50% include a caution because they often reflect mergers or accounting
@@ -698,6 +722,7 @@ def india_screener(
         normalized_symbol = normalized_symbol.removesuffix(".NS")
         normalized_symbol = f"{normalized_symbol}.NS"
     name_filter = company_name.strip().casefold() if company_name else None
+    lookup_mode = normalized_symbol is not None or name_filter is not None
 
     try:
         snapshot = load_snapshot()
@@ -718,14 +743,27 @@ def india_screener(
         "trailing_pe": min_trailing_pe is not None or max_trailing_pe is not None,
         "profit_margin": min_profit_margin is not None,
         "revenue_growth": min_revenue_growth is not None,
+        "price": min_price is not None or max_price is not None,
+        "total_debt": debt_free,
         "name": name_filter is not None,
     }
-    required_fields = {field for field, requested in requested_filters.items() if requested}
+    filter_required_fields = {
+        field for field, requested in requested_filters.items() if requested
+    }
+    required_fields = set(filter_required_fields)
     sort_field = INDIA_SORT_FIELDS[sort_by]
-    required_fields.add(sort_field)
-    if sort_field in {"total_cash", "total_debt"}:
+    if not lookup_mode:
+        if sort_field == "pct_above_52w_low":
+            required_fields.update({
+                "price", "fifty_two_week_low", "pct_above_52w_low",
+            })
+        else:
+            required_fields.add(sort_field)
+    if not lookup_mode and sort_field in {"total_cash", "total_debt"}:
         required_fields.add("financial_currency")
     excluded_missing_data = 0
+    excluded_by_field = {}
+    excluded_below_52w_low = 0
     matches = []
 
     for ticker_symbol, record in tickers.items():
@@ -738,17 +776,35 @@ def india_screener(
                 "market_cap", "sector", "industry", "trailing_pe",
                 "profit_margin", "revenue_growth", "price",
                 "name", "total_cash", "total_debt",
-                "financial_currency",
+                "financial_currency", "fifty_two_week_low", "fifty_two_week_high",
             )
         }
         if record.get("status") in ("failed", "skipped"):
             values = {key: None for key in values}
         quote_currency = record.get("quote_currency")
+        values["quote_currency"] = quote_currency
+        pct_above_52w_low = None
+        price = values["price"]
+        fifty_two_week_low = values["fifty_two_week_low"]
+        if (
+            isinstance(price, (int, float))
+            and not isinstance(price, bool)
+            and isinstance(fifty_two_week_low, (int, float))
+            and not isinstance(fifty_two_week_low, bool)
+            and fifty_two_week_low > 0
+        ):
+            pct_above_52w_low = price / fifty_two_week_low - 1
+        values["pct_above_52w_low"] = pct_above_52w_low
         if (
             "market_cap" in required_fields
             and (quote_currency or "").upper() != "INR"
         ):
             values["market_cap"] = None
+        if (
+            requested_filters["price"]
+            and (quote_currency or "").upper() != "INR"
+        ):
+            values["price"] = None
         missing_fields = {
             field
             for field in required_fields
@@ -757,6 +813,7 @@ def india_screener(
                 field in {
                     "market_cap", "trailing_pe", "profit_margin",
                     "revenue_growth", "price", "total_cash", "total_debt",
+                    "fifty_two_week_low", "pct_above_52w_low",
                 }
                 and (
                     isinstance(values[field], bool)
@@ -800,6 +857,18 @@ def india_screener(
             "market_cap" not in missing_fields
             and max_market_cap_crore is not None
             and market_cap_crore > max_market_cap_crore
+        ):
+            continue
+        if (
+            "price" not in missing_fields
+            and min_price is not None
+            and values["price"] < min_price
+        ):
+            continue
+        if (
+            "price" not in missing_fields
+            and max_price is not None
+            and values["price"] > max_price
         ):
             continue
         if (
@@ -855,8 +924,33 @@ def india_screener(
             and values["financial_currency"].upper() != financial_currency
         ):
             continue
+        if (
+            debt_free
+            and "total_debt" not in missing_fields
+            and values["total_debt"] != 0
+        ):
+            continue
+        debt_missing = debt_free and "total_debt" in missing_fields
+        if debt_missing:
+            other_filter_missing = (
+                missing_fields & filter_required_fields
+            ) - {"total_debt"}
+            if not other_filter_missing:
+                excluded_by_field["total_debt"] = (
+                    excluded_by_field.get("total_debt", 0) + 1
+                )
+            missing_fields.discard("total_debt")
         if missing_fields:
             excluded_missing_data += 1
+            continue
+        if debt_missing:
+            continue
+        if (
+            sort_field == "pct_above_52w_low"
+            and not lookup_mode
+            and values["price"] < values["fifty_two_week_low"]
+        ):
+            excluded_below_52w_low += 1
             continue
 
         record_for_sort = {
@@ -864,57 +958,66 @@ def india_screener(
             "market_cap": market_cap_crore,
             "profit_margin": profit_margin_pct,
             "revenue_growth": revenue_growth_pct,
+            "pct_above_52w_low": pct_above_52w_low,
         }
         matches.append((ticker_symbol, record, record_for_sort))
 
     descending = sort_order == "desc"
-    if sort_field in {"total_cash", "total_debt"}:
-        currency_groups = {}
-        for match in matches:
-            currency = match[1]["financial_currency"].upper()
-            currency_groups.setdefault(currency, []).append(match)
-        matches = []
-        for currency in sorted(currency_groups):
-            matches.extend(sorted(
-                currency_groups[currency],
-                key=lambda item: item[2][sort_field],
-                reverse=descending,
-            ))
-    else:
-        matches.sort(
+
+    def sort_present_before_missing(items, field):
+        present = [item for item in items if item[2][field] is not None]
+        missing = [item for item in items if item[2][field] is None]
+        present.sort(
             key=lambda item: (
-                item[2][sort_field].casefold()
-                if isinstance(item[2][sort_field], str)
-                else item[2][sort_field]
+                item[2][field].casefold()
+                if isinstance(item[2][field], str)
+                else item[2][field]
             ),
             reverse=descending,
         )
+        return present + missing
+
+    if sort_field in {"total_cash", "total_debt"}:
+        currency_groups = {}
+        for match in matches:
+            currency = (match[1].get("financial_currency") or "unavailable").upper()
+            currency_groups.setdefault(currency, []).append(match)
+        matches = []
+        for currency in sorted(currency_groups):
+            matches.extend(sort_present_before_missing(currency_groups[currency], sort_field))
+    else:
+        matches = sort_present_before_missing(matches, sort_field)
     total_matches = len(matches)
     page = matches[offset:offset + limit]
     rows = []
-    for symbol, record, _ in page:
+
+    def present(value):
+        return "unavailable" if lookup_mode and value is None else value
+
+    for symbol, record, sort_values in page:
         quote_currency = record.get("quote_currency")
         financial_currency = record.get("financial_currency")
         rows.append({
             "symbol": symbol,
-            "name": record.get("name"),
-            "market_cap": format_money(record.get("market_cap"), quote_currency),
-            "price": format_money(record.get("price"), quote_currency, scale_inr=False),
-            "trailing_pe": fmt_num(record.get("trailing_pe")),
-            "sector": record.get("sector"),
-            "industry": record.get("industry"),
-            "fifty_two_week_low": format_money(
+            "name": present(record.get("name")),
+            "market_cap": present(format_money(record.get("market_cap"), quote_currency)),
+            "price": present(format_money(record.get("price"), quote_currency, scale_inr=False)),
+            "trailing_pe": present(fmt_num(record.get("trailing_pe"))),
+            "sector": present(record.get("sector")),
+            "industry": present(record.get("industry")),
+            "fifty_two_week_low": present(format_money(
                 record.get("fifty_two_week_low"), quote_currency, scale_inr=False
-            ),
-            "fifty_two_week_high": format_money(
+            )),
+            "fifty_two_week_high": present(format_money(
                 record.get("fifty_two_week_high"), quote_currency, scale_inr=False
-            ),
-            "revenue_growth": fmt_pct(record.get("revenue_growth")),
-            "profit_margin": fmt_pct(record.get("profit_margin")),
-            "total_cash": format_money(record.get("total_cash"), financial_currency),
-            "total_debt": format_money(record.get("total_debt"), financial_currency),
-            "quote_currency": quote_currency,
-            "financial_currency": financial_currency,
+            )),
+            "pct_above_52w_low": present(fmt_pct(sort_values.get("pct_above_52w_low"))),
+            "revenue_growth": present(fmt_pct(record.get("revenue_growth"))),
+            "profit_margin": present(fmt_pct(record.get("profit_margin"))),
+            "total_cash": present(format_money(record.get("total_cash"), financial_currency)),
+            "total_debt": present(format_money(record.get("total_debt"), financial_currency)),
+            "quote_currency": present(quote_currency),
+            "financial_currency": present(financial_currency),
         })
 
     response = {
@@ -924,6 +1027,18 @@ def india_screener(
         "revenue_growth_label": "latest-quarter YoY revenue growth (Yahoo)",
         "rows": rows,
     }
+    if debt_free or sort_field == "pct_above_52w_low":
+        if debt_free:
+            excluded_by_field["total_debt"] = excluded_by_field.get("total_debt", 0)
+        if sort_field == "pct_above_52w_low":
+            excluded_by_field["price_vs_52w_low"] = excluded_below_52w_low
+            response["note"] = (
+                f"Excluded {excluded_below_52w_low} row(s) with price below the "
+                "52-week low because the Yahoo data is inconsistent."
+            )
+        response["excluded_by_field"] = excluded_by_field
+    if debt_free:
+        response["debt_free_count"] = total_matches
     if name_filter is not None:
         response["company_name_filter"] = company_name.strip()
     if aliases_applied:
