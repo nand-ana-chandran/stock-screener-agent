@@ -13,6 +13,8 @@ with patch.dict(os.environ, {"GOOGLE_API_KEY": "offline-test-placeholder"}):
     SPEC.loader.exec_module(eval_module)
 
 select_cases = eval_module.select_cases
+load_cases_module = eval_module.load_cases_module
+parse_args = eval_module.parse_args
 check_answer = eval_module.check_answer
 check_turn = eval_module.check_turn
 
@@ -64,6 +66,41 @@ class TestEvalCaseSelection(unittest.TestCase):
         selected = select_cases(CASES, only_ids=["snapshot_nvda"])
         self.assertEqual([case["id"] for case in selected], ["snapshot_nvda"])
 
+    def test_heldout_india_cases_load_with_unique_ids(self):
+        module = load_cases_module("evals/heldout_india.py")
+        ids = [case["id"] for case in module.CASES]
+
+        self.assertEqual(len(ids), 15)
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(ids, [f"heldout_{index:02d}" for index in range(1, 16)])
+        self.assertEqual(len(module.CASES[2]["turns"]), 2)
+        self.assertEqual(len(module.CASES[3]["turns"]), 2)
+
+    def test_cases_option_loads_and_selects_heldout_module(self):
+        args = parse_args([
+            "--cases",
+            "evals/heldout_india.py",
+            "1",
+            "heldout_08",
+        ])
+        module = load_cases_module(args.cases)
+        selected = select_cases(module.CASES, only_ids=args.case_ids)
+
+        self.assertEqual(args.repeats, 1)
+        self.assertEqual([case["id"] for case in selected], ["heldout_08"])
+
+    def test_cases_option_preserves_prefix_selection(self):
+        args = parse_args([
+            "--cases",
+            "evals/heldout_india.py",
+            "--prefix",
+            "heldout_",
+        ])
+        module = load_cases_module(args.cases)
+        selected = select_cases(module.CASES, prefix=args.prefix)
+
+        self.assertEqual(len(selected), 15)
+
     def test_unknown_prefix_raises_clear_error(self):
         with self.assertRaisesRegex(ValueError, "No eval cases found"):
             select_cases(CASES, prefix="missing_")
@@ -82,6 +119,27 @@ class TestEvalCaseSelection(unittest.TestCase):
         self.assertEqual(check_turn(expected, actual, limits)[:2], (True, True))
         actual.append({"name": "company_snapshot", "args": {"symbol": "INFY"}})
         self.assertFalse(check_turn(expected, actual, limits)[0])
+
+    def test_any_of_tool_limit_accepts_us_tool_but_rejects_india_tool(self):
+        limits = {
+            "_any_of": ["simple_screener", "custom_screener", "company_snapshot"],
+            "india_screener": {"max": 0},
+        }
+        self.assertEqual(
+            check_turn(
+                [],
+                [{"name": "custom_screener", "args": {}}],
+                limits,
+            )[:2],
+            (True, True),
+        )
+        self.assertFalse(
+            check_turn(
+                [],
+                [{"name": "india_screener", "args": {}}],
+                limits,
+            )[0]
+        )
 
     def test_pharma_case_accepts_healthcare_sector_or_drug_industry(self):
         case = next(
@@ -339,6 +397,70 @@ class TestEvalCaseSelection(unittest.TestCase):
         )
         mixed_result = check_answer(case, mixed_currency_ranking, two_groups)
         self.assertTrue(any("mixes USD and INR" in reason for reason in mixed_result))
+
+    def test_new_india_development_case_answer_checks(self):
+        debt_case = next(
+            case for case in eval_module.CASES
+            if case["id"] == "india_debt_free"
+        )
+        debt_output = [json.dumps({
+            "total_matches": 2,
+            "debt_free_count": 2,
+            "excluded_by_field": {"total_debt": 1},
+            "rows": [],
+        })]
+        self.assertEqual(
+            check_answer(
+                debt_case,
+                "There are 2 debt-free companies. 1 row lacked debt data.",
+                debt_output,
+            ),
+            [],
+        )
+        self.assertTrue(check_answer(
+            debt_case,
+            "There are 2 debt-free companies.",
+            debt_output,
+        ))
+
+        price_case = next(
+            case for case in eval_module.CASES
+            if case["id"] == "india_price_under_100"
+        )
+        self.assertEqual(
+            check_answer(
+                price_case,
+                "There are 3 matching companies in total.",
+                [json.dumps({"total_matches": 3, "rows": []})],
+            ),
+            [],
+        )
+        self.assertTrue(check_answer(
+            price_case,
+            "Here are some companies.",
+            [json.dumps({"total_matches": 3, "rows": []})],
+        ))
+
+        order_case = next(
+            case for case in eval_module.CASES
+            if case["id"] == "india_52w_low"
+        )
+        ordered_output = [json.dumps({
+            "rows": [{"symbol": "NEAR.NS"}, {"symbol": "FAR.NS"}],
+        })]
+        self.assertEqual(
+            check_answer(
+                order_case,
+                "Closest to the 52-week low: NEAR.NS, then FAR.NS.",
+                ordered_output,
+            ),
+            [],
+        )
+        self.assertTrue(check_answer(
+            order_case,
+            "Closest to the 52-week low: FAR.NS, then NEAR.NS.",
+            ordered_output,
+        ))
 
     def test_saved_it_cash_answers_are_checked_against_currency_groups(self):
         case = next(

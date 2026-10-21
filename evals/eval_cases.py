@@ -1,3 +1,4 @@
+
 # Each case is a list of turns (several turns test memory).
 # Each turn has a prompt and the tool calls we expect.
 # An arg check is a literal (exact match, case-insensitive for strings)
@@ -134,6 +135,103 @@ def check_it_cash_answer(answer, tool_outputs=None):
                 f"answer does not mention the USD group or its count ({usd_count})"
             )
     return issues
+
+
+def _india_tool_results(tool_outputs):
+    parsed_results = []
+    for output in tool_outputs or []:
+        try:
+            parsed = json.loads(output)
+        except (TypeError, json.JSONDecodeError):
+            continue
+        if isinstance(parsed, dict) and isinstance(parsed.get("rows"), list):
+            parsed_results.append(parsed)
+    return parsed_results
+
+
+def _count_pattern(count):
+    forms = {str(count), f"{count:,}"}
+    small_number_words = {
+        0: "zero", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five",
+        6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten",
+        11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen",
+        15: "fifteen", 16: "sixteen", 17: "seventeen", 18: "eighteen",
+        19: "nineteen", 20: "twenty",
+    }
+    if count in small_number_words:
+        forms.add(small_number_words[count])
+    return r"(?<![\w,])(?:" + "|".join(re.escape(form) for form in forms) + r")(?!\w)"
+
+
+def check_india_total_matches_answer(answer, tool_outputs=None):
+    results = _india_tool_results(tool_outputs)
+    if not results:
+        return ["India tool output with total_matches was unavailable to the answer check"]
+    count = results[-1].get("total_matches")
+    if not isinstance(count, int):
+        return ["India tool output did not contain an integer total_matches"]
+    count_pattern = _count_pattern(count)
+    labeled_count = re.search(
+        rf"(?:\b(?:total|matches|companies|stocks)\b.{{0,35}}{count_pattern}"
+        rf"|{count_pattern}.{{0,35}}\b(?:total|matches|companies|stocks)\b)",
+        answer,
+        re.IGNORECASE,
+    )
+    if labeled_count is None:
+        return [f"answer did not state the total of {count} matching companies or stocks"]
+    return []
+
+
+def check_india_debt_free_answer(answer, tool_outputs=None):
+    issues = []
+    results = _india_tool_results(tool_outputs)
+    if not results:
+        return ["India tool output with debt-free counts was unavailable to the answer check"]
+    result = results[-1]
+    debt_free_count = result.get("debt_free_count")
+    missing_debt_count = result.get("excluded_by_field", {}).get("total_debt")
+    if not isinstance(debt_free_count, int):
+        issues.append("India tool output did not contain debt_free_count")
+    elif not re.search(
+        rf"(?:\bdebt[- ]free\b.{{0,35}}{_count_pattern(debt_free_count)}"
+        rf"|{_count_pattern(debt_free_count)}.{{0,35}}\bdebt[- ]free\b)",
+        answer,
+        re.IGNORECASE,
+    ):
+        issues.append(f"answer did not state the {debt_free_count} debt-free matches")
+    if not isinstance(missing_debt_count, int):
+        issues.append("India tool output did not contain excluded_by_field.total_debt")
+    elif not re.search(
+        rf"(?:{_count_pattern(missing_debt_count)}.{{0,50}}"
+        rf"(?:rows?|companies?).{{0,35}}(?:missing|lack|without|unavailable).{{0,20}}debt"
+        rf"|(?:missing|lack|without|unavailable).{{0,20}}debt.{{0,50}}"
+        rf"{_count_pattern(missing_debt_count)})",
+        answer,
+        re.IGNORECASE,
+    ):
+        issues.append(
+            f"answer did not state that {missing_debt_count} rows lacked debt data"
+        )
+    return issues
+
+
+def check_india_52w_order_answer(answer, tool_outputs=None):
+    results = _india_tool_results(tool_outputs)
+    if not results:
+        return ["India tool output with sorted rows was unavailable to the answer check"]
+    symbols = [
+        row.get("symbol")
+        for row in results[-1]["rows"]
+        if isinstance(row, dict) and isinstance(row.get("symbol"), str)
+    ]
+    if not symbols:
+        return []
+    positions = [answer.casefold().find(symbol.casefold()) for symbol in symbols]
+    if any(position < 0 for position in positions):
+        return ["answer did not include every returned symbol in the 52-week-low ranking"]
+    if positions != sorted(positions):
+        return ["answer did not preserve pct_above_52w_low tool order"]
+    return []
 
 
 SMALL_CAP_TECH_GAINERS = {
@@ -311,6 +409,27 @@ CASES = [
              ]}]}],
      "tool_call_limits": {"india_screener": {"min": 1, "max": 2}},
      "answer_checks": [check_it_cash_answer]},
+    {"id": "india_debt_free", "turns": [
+        {"prompt": "How many NSE companies are debt-free? List the debt-free companies.",
+         "calls": [{"tool": "india_screener", "args": {
+             "debt_free": True}}]}],
+     "answer_checks": [check_india_debt_free_answer]},
+    {"id": "india_price_under_100", "turns": [
+        {"prompt": "How many NSE companies have a share price below 100 rupees?",
+         "calls": [{"tool": "india_screener", "args": {
+             "max_price": 100}}]}],
+     "answer_checks": [check_india_total_matches_answer]},
+    {"id": "india_bagmane_market_cap", "turns": [
+        {"prompt": "What is BAGMANE.NS's market cap?",
+         "calls": [{"tool": "india_screener", "args": {
+             "symbol": "BAGMANE.NS"}}]}],
+     "answer_must_include": [r"(?i)\bBAGMANE\.NS\b", r"(?i)\bunavailable\b"]},
+    {"id": "india_52w_low", "turns": [
+        {"prompt": "Which NSE stocks are closest to their 52-week low? Show the top 5.",
+         "calls": [{"tool": "india_screener", "args": {
+             "sort_by": "pct_above_52w_low", "sort_order": "asc", "limit": 5}}]}],
+     "answer_must_include": [r"(?i)52[- ]week low"],
+     "answer_checks": [check_india_52w_order_answer]},
 
     # --- US routing regression: India tool must not be used ---
     {"id": "us_query_does_not_route_to_india", "turns": [

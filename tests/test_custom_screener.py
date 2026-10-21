@@ -45,6 +45,23 @@ def test_gainers_only_excludes_negative_and_sorts_descending():
     assert screen.call_args.kwargs["sortAsc"] is False
 
 
+def test_yahoo_blocked_errors_are_returned_as_structured_errors():
+    for error in (
+        RuntimeError("HTTP Error 401: Unauthorized"),
+        RuntimeError("HTTP Error 429: Too Many Requests"),
+    ):
+        with patch("stock_screener.tool.yf.screen", side_effect=error):
+            result = custom_screener.invoke({})
+
+        assert json.loads(result) == {
+            "error": "yahoo_blocked",
+            "message": (
+                "Yahoo Finance is temporarily refusing requests from this server "
+                "(rate limiting). No data was retrieved."
+            ),
+        }
+
+
 def test_gainers_default_volume_threshold_filters_returned_quotes():
     quotes = [
         {
@@ -403,6 +420,7 @@ def test_volume_sort_is_descending_even_if_upstream_rows_are_unsorted():
 
 if __name__ == "__main__":
     test_gainers_only_excludes_negative_and_sorts_descending()
+    test_yahoo_blocked_errors_are_returned_as_structured_errors()
     test_gainers_default_volume_threshold_filters_returned_quotes()
     test_gainers_filter_volume_before_selecting_top_ten_across_pages()
     test_explicit_volume_threshold_override_and_no_minimum_are_respected()
