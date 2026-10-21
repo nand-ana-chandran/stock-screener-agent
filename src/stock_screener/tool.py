@@ -14,6 +14,37 @@ from .india_data import (
     load_snapshot,
 )
 
+YAHOO_BLOCKED_MESSAGE = (
+    "Yahoo Finance is temporarily refusing requests from this server "
+    "(rate limiting). No data was retrieved."
+)
+
+
+def yahoo_blocked_error(error):
+    """Return a structured response for Yahoo authentication/rate-limit blocks."""
+    current = error
+    seen = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        response = getattr(current, "response", None)
+        status = (
+            getattr(current, "status_code", None)
+            or getattr(current, "code", None)
+            or getattr(response, "status_code", None)
+        )
+        message = str(current)
+        if (
+            str(status) in {"401", "429"}
+            or re.search(r"\b(?:401|429)\b", message)
+            or re.search(r"invalid crumb|too many requests", message, re.I)
+        ):
+            return json.dumps({
+                "error": "yahoo_blocked",
+                "message": YAHOO_BLOCKED_MESSAGE,
+            })
+        current = current.__cause__ or current.__context__
+    return None
+
 
 def fmt_money(n, currency="USD"):
     """1540230144 -> '$1.54B'; for other currencies -> 'BRL 287.43B'."""
@@ -163,6 +194,9 @@ def simple_screener(screen_type: str, offset: int = 0, limit: int = 25) -> str:
             quotes = result.get("quotes", [])
             selected_quotes = quotes
     except Exception as e:
+        blocked = yahoo_blocked_error(e)
+        if blocked:
+            return blocked
         return f"Could not fetch '{screen_type}' from Yahoo Finance right now: {e}"
 
     if os.getenv("DEBUG_DUMP"):
@@ -296,6 +330,9 @@ def custom_screener(
             query, SORT_FIELDS[sort_by], ascending
         )
     except Exception as e:
+        blocked = yahoo_blocked_error(e)
+        if blocked:
+            return blocked
         return f"Screener error: {e}"
 
     retrieved_candidate_count = len(raw_quotes)
@@ -434,6 +471,9 @@ def company_snapshot(symbol: str) -> str:
         ticker = yf.Ticker(symbol)
         info = ticker.info
     except Exception as e:
+        blocked = yahoo_blocked_error(e)
+        if blocked:
+            return blocked
         return f"Could not fetch data for {symbol}: {e}"
 
     if not info or not (info.get("longName") or info.get("shortName")):
@@ -547,6 +587,7 @@ def india_screener(
 
     Use only for requests about India, NSE, Nifty, Indian companies, or rupees.
     This tool reads the saved snapshot and never fetches live data.
+    revenue_growth is latest-quarter YoY revenue growth (Yahoo).
     Indian companies and NSE symbols must use this tool, not company_snapshot or
     the US screeners. Real sector values include Technology, Healthcare,
     Financial Services, Consumer Cyclical, Consumer Defensive, Industrials,
@@ -556,6 +597,8 @@ def india_screener(
     "IT sector", or "IT services". This covers Information Technology Services
     and software industries, including TCS, Infosys, Wipro, and HCLTech.
     "software" alone covers software industries only.
+    This tool cannot compare two fields for a row; sorting by total_debt does not
+    identify companies whose debt exceeds their cash.
 
     Args:
         symbol: Optional NSE symbol with or without .NS, matched case-insensitively.
@@ -581,11 +624,16 @@ def india_screener(
     Returns:
         JSON containing snapshot_date, total_matches, excluded_missing_data, and rows.
         Money fields carry their quote or financial currency labels. If a requested
-        sector or industry returns no matches, the response includes the valid values
-        present in the snapshot. When cash or debt sorting matches multiple financial
-        currencies, currency_groups and note report the per-currency counts and explain
+        revenue_growth is latest-quarter YoY revenue growth (Yahoo); values above 50%
+        or below -50% include a caution because they often reflect mergers or accounting
+        changes. If a sector or industry filter returns no matches, the response
+        includes the valid values present in the snapshot. When cash or debt sorting
+        matches multiple financial currencies, currency_groups and note report the
+        per-currency counts and explain
         that rows are ranked only within each currency; the note directs the caller to
-        use financial_currency to view another group.
+        use financial_currency to view another group. Sorting does not compare debt
+        with cash; Financial Services rows' debt and cash are not comparable with
+        those values in other sectors.
     """
     if sort_by not in INDIA_SORT_FIELDS:
         return f"Unknown sort_by '{sort_by}'. Valid options: {', '.join(INDIA_SORT_FIELDS)}"
@@ -597,6 +645,7 @@ def india_screener(
         return "offset must be zero or greater."
     sector_filter = sector.strip() if sector else None
     industry_filter = industry.strip() if industry else None
+    aliases_applied = {}
     it_aliases = {"it", "it companies", "it services", "it services companies"}
     it_industry_filter = False
     if sector_filter and sector_filter.casefold() in it_aliases:
@@ -605,16 +654,41 @@ def india_screener(
     elif sector_filter and sector_filter.casefold() == "pharma":
         sector_filter = None
         industry_filter = "Drug Manufacturers"
+        aliases_applied["pharma"] = {"industry": "Drug Manufacturers"}
     elif sector_filter and sector_filter.casefold() == "banks":
         sector_filter = None
         industry_filter = "Banks"
+        aliases_applied["banks"] = {"industry": "Banks"}
+    elif sector_filter and sector_filter.casefold() == "fmcg":
+        sector_filter = "Consumer Defensive"
+        aliases_applied["FMCG"] = {"sector": "Consumer Defensive"}
+    elif sector_filter and sector_filter.casefold() == "auto":
+        sector_filter = "Consumer Cyclical"
+        industry_filter = "Auto"
+        aliases_applied["auto"] = {
+            "sector": "Consumer Cyclical",
+            "industry": "Auto",
+        }
     if industry_filter and industry_filter.casefold() in it_aliases:
         industry_filter = None
         it_industry_filter = True
     elif industry_filter and industry_filter.casefold() == "pharma":
         industry_filter = "Drug Manufacturers"
+        aliases_applied["pharma"] = {"industry": "Drug Manufacturers"}
     elif industry_filter and industry_filter.casefold() == "banks":
         industry_filter = "Banks"
+        aliases_applied["banks"] = {"industry": "Banks"}
+    elif industry_filter and industry_filter.casefold() == "fmcg":
+        industry_filter = None
+        sector_filter = "Consumer Defensive"
+        aliases_applied["FMCG"] = {"sector": "Consumer Defensive"}
+    elif industry_filter and industry_filter.casefold() == "auto":
+        industry_filter = "Auto"
+        sector_filter = "Consumer Cyclical"
+        aliases_applied["auto"] = {
+            "sector": "Consumer Cyclical",
+            "industry": "Auto",
+        }
     if financial_currency is not None:
         financial_currency = financial_currency.strip().upper()
         if financial_currency not in {"INR", "USD"}:
@@ -847,8 +921,54 @@ def india_screener(
         "snapshot_date": get_snapshot_date(snapshot),
         "total_matches": total_matches,
         "excluded_missing_data": excluded_missing_data,
+        "revenue_growth_label": "latest-quarter YoY revenue growth (Yahoo)",
         "rows": rows,
     }
+    if name_filter is not None:
+        response["company_name_filter"] = company_name.strip()
+    if aliases_applied:
+        matched_sectors = sorted({
+            record.get("sector")
+            for _, record, _ in matches
+            if isinstance(record.get("sector"), str)
+        })
+        matched_industries = sorted({
+            record.get("industry")
+            for _, record, _ in matches
+            if isinstance(record.get("industry"), str)
+        })
+        response["aliases_applied"] = {
+            alias: {
+                **resolution,
+                "matched_sectors": matched_sectors,
+                "matched_industries": matched_industries,
+            }
+            for alias, resolution in aliases_applied.items()
+        }
+    if any(
+        record.get("sector") == "Financial Services"
+        for _, record, _ in matches
+    ):
+        response["financial_services_note"] = (
+            "For Financial Services rows, debt and cash are not comparable with "
+            "debt and cash values from other sectors."
+        )
+    high_revenue_growth = [
+        f"{symbol} ({fmt_pct(record.get('revenue_growth'))})"
+        for symbol, record, _ in page
+        if isinstance(record.get("revenue_growth"), (int, float))
+        and not isinstance(record.get("revenue_growth"), bool)
+        and (
+            record["revenue_growth"] > 0.5
+            or record["revenue_growth"] < -0.5
+        )
+    ]
+    if high_revenue_growth:
+        response["revenue_growth_caution"] = (
+            "Latest-quarter YoY revenue growth above 50% or below -50% often "
+            "reflects mergers or accounting changes; treat these values with caution. "
+            "Flagged rows: " + ", ".join(high_revenue_growth) + "."
+        )
     if sort_field in {"total_cash", "total_debt"}:
         response["sort_note"] = (
             "Sorted within each financial currency; amounts in different currencies "
