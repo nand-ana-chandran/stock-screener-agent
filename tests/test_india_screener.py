@@ -190,6 +190,50 @@ class TestIndiaScreener(unittest.TestCase):
             ["AAA.NS", "BAGMANE.NS", "BBB.NS"],
         )
 
+    def test_symbol_only_query_does_not_count_unrelated_unavailable_rows(self):
+        snapshot = {
+            **SNAPSHOT,
+            "skipped_ticker_count": 12,
+        }
+        result = self._invoke({"symbol": "AAA.NS"}, snapshot)
+
+        self.assertEqual(result["total_matches"], 1)
+        self.assertEqual(result["rows"][0]["symbol"], "AAA.NS")
+        self.assertEqual(result["excluded_missing_data"], 0)
+
+    def test_missing_sort_data_counts_only_after_other_filters_pass(self):
+        snapshot = {
+            "snapshot_date": "2026-10-20",
+            "tickers": {
+                "COMPLETE.NS": {
+                    "status": "ok",
+                    "industry": "Information Technology Services",
+                    "total_cash": 1000,
+                    "financial_currency": "INR",
+                },
+                "MATCH_MISSING_CASH.NS": {
+                    "status": "partial",
+                    "industry": "Information Technology Services",
+                    "total_cash": None,
+                    "financial_currency": "INR",
+                },
+                "OTHER_MISSING_CASH.NS": {
+                    "status": "partial",
+                    "industry": "Banks",
+                    "total_cash": None,
+                    "financial_currency": "INR",
+                },
+            },
+        }
+        result = self._invoke({
+            "industry": "Information Technology Services",
+            "sort_by": "total_cash",
+        }, snapshot)
+
+        self.assertEqual(result["total_matches"], 1)
+        self.assertEqual([row["symbol"] for row in result["rows"]], ["COMPLETE.NS"])
+        self.assertEqual(result["excluded_missing_data"], 1)
+
     def test_skipped_ticker_is_unavailable_and_null_currency_is_not_guessed(self):
         result = self._invoke({
             "sort_by": "price",

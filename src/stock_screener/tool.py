@@ -651,15 +651,12 @@ def india_screener(
     required_fields.add(sort_field)
     if sort_field in {"total_cash", "total_debt"}:
         required_fields.add("financial_currency")
-    excluded_missing_data = snapshot.get("skipped_ticker_count", 0)
+    excluded_missing_data = 0
     matches = []
 
     for ticker_symbol, record in tickers.items():
         normalized_record_symbol = ticker_symbol.upper().removesuffix(".NS") + ".NS"
         if normalized_symbol and normalized_record_symbol != normalized_symbol:
-            continue
-        if record.get("status") in ("failed", "skipped"):
-            excluded_missing_data += 1
             continue
         values = {
             key: record.get(key)
@@ -670,6 +667,8 @@ def india_screener(
                 "financial_currency",
             )
         }
+        if record.get("status") in ("failed", "skipped"):
+            values = {key: None for key in values}
         quote_currency = record.get("quote_currency")
         if (
             "market_cap" in required_fields
