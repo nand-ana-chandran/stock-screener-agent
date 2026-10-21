@@ -12,6 +12,8 @@ permissions:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_API_KEY: ci-placeholder-not-a-real-key
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
