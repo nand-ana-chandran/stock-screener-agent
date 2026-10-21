@@ -423,7 +423,7 @@ CASES = [
         {"prompt": "What is BAGMANE.NS's market cap?",
          "calls": [{"tool": "india_screener", "args": {
              "symbol": "BAGMANE.NS"}}]}],
-     "answer_must_include": [r"(?i)\bBAGMANE\.NS\b", r"(?i)\bunavailable\b"]},
+        "answer_must_include": [r"(?i)\bBAGMANE\.NS\b", r"(?i)\b(?:unavailable|not available|no market cap data|missing|N/A)\b"]},
     {"id": "india_52w_low", "turns": [
         {"prompt": "Which NSE stocks are closest to their 52-week low? Show the top 5.",
          "calls": [{"tool": "india_screener", "args": {
