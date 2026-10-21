@@ -1,0 +1,1415 @@
+[
+  {
+    "case": "heldout_01",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Which NSE companies are debt-free?",
+    "attempt": 1,
+    "guard": "on",
+    "status": "fail",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "limit": 10,
+          "sort_order": "asc",
+          "sort_by": "total_debt"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [
+      "answer did not match required pattern: \\b(?:cannot|can't|not supported|unable)\\b|\\b(?:\\d+|several|some)\\s+(?:rows?|companies?)\\b.{0,60}\\b(?:missing|lack(?:ed|ing)?|without|no)\\b.{0,30}\\bdebt\\b|\\b(?:missing|unavailable)\\s+debt\\s+data\\b"
+    ],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Based on the India snapshot dated 2026-10-20, several NSE companies report zero or near-zero total debt. \n\nNote that rows reporting in INR (494) are ranked within that currency only. Rows in other currency groups are excluded from this ranking: USD (2): HCLTECH.NS, INFY.NS. For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\n\nHere are some of the top-matched companies with minimal or zero total debt:\n\n1. **Force Motors Limited** (`FORCEMOT.NS`) \u2014 Consumer Cyclical (Auto Manufacturers)\n   - Market Cap: \u20b923,141.47 crore\n   - Total Debt: \u20b90.00 crore\n   - Total Cash: \u20b9831.59 crore\n\n2. **General Insurance Corporation of India** (`GICRE.NS`) \u2014 Financial Services (Insurance - Reinsurance)\n   - Market Cap: \u20b957,403.97 crore\n   - Total Debt: \u20b90.00 crore\n   - Total Cash: \u20b929,609.45 crore\n\n3. **HDFC Asset Management Company Limited** (`HDFCAMC.NS`) \u2014 Financial Services (Asset Management)\n   - Market Cap: \u20b91.01 lakh crore\n   - Total Debt: \u20b90.00 crore\n   - Total Cash: \u20b945.07 crore\n\n4. **ICICI Prudential Asset Management Company Limited** (`ICICIAMC.NS`) \u2014 Financial Services (Asset Management)\n   - Market Cap: \u20b91.37 lakh crore\n   - Total Debt: \u20b90.00 crore\n   - Total Cash: \u20b95,215.28 crore\n\n5. **SBI Life Insurance Company Limited** (`SBILIFE.NS`) \u2014 Financial Services (Insurance - Life)\n   - Market Cap: \u20b91.65 lakh crore\n   - Total Debt: \u20b90.00 crore\n   - Total Cash: \u20b91,526.74 crore\n\n6. **Star Health and Allied Insurance Company Limited** (`STARHEALTH.NS`) \u2014 Financial Services (Insurance - Life)\n   - Market Cap: \u20b931,894.41 crore\n   - Total Debt: \u20b90.00 crore\n   - Latest-quarter YoY revenue growth (Yahoo): 1407.80% *(Caution: Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution.)*\n\n7. **The New India Assurance Company Limited** (`NIACL.NS`) \u2014 Financial Services (Insurance - Diversified)\n   - Market Cap: \u20b928,676.85 crore\n   - Total Debt: \u20b90.00 crore\n   - Total Cash: \u20b921,949.15 crore\n\n8. **Vedanta Oil and Gas Limited** (`VOGL.NS`) \u2014 Basic Materials (Other Industrial Metals & Mining)\n   - Market Cap: \u20b911,911.58 crore\n   - Total Debt: \u20b90.00 crore\n\n9. **BSE Limited** (`BSE.NS`) \u2014 Financial Services (Financial Data & Stock Exchanges)\n   - Market Cap: \u20b91.35 lakh crore\n   - Total Debt: \u20b90.02 crore\n   - Total Cash: \u20b95,503.38 crore\n   - Latest-quarter YoY revenue growth (Yahoo): 64.00% *(Caution: Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution.)*\n\n10. **Gillette India Limited** (`GILLETTE.NS`) \u2014 Consumer Defensive (Household & Personal Products)\n    - Market Cap: \u20b923,669.90 crore\n    - Total Debt: \u20b90.02 crore\n    - Total Cash: \u20b9269.26 crore\n\n*(This is informational only, not financial advice.)*",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 496,\n  \"excluded_missing_data\": 4,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"FORCEMOT.NS\",\n      \"name\": \"Force Motors Limited\",\n      \"market_cap\": \"\u20b923,141.47 crore\",\n      \"price\": \"\u20b917,563.00\",\n      \"trailing_pe\": 18.49,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Auto Manufacturers\",\n      \"fifty_two_week_low\": \"\u20b916,109.00\",\n      \"fifty_two_week_high\": \"\u20b926,450.00\",\n      \"revenue_growth\": \"6.20%\",\n      \"profit_margin\": \"13.61%\",\n      \"total_cash\": \"\u20b9831.59 crore\",\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"GICRE.NS\",\n      \"name\": \"General Insurance Corporation of India\",\n      \"market_cap\": \"\u20b957,403.97 crore\",\n      \"price\": \"\u20b9327.20\",\n      \"trailing_pe\": 6.47,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Insurance - Reinsurance\",\n      \"fifty_two_week_low\": \"\u20b9308.00\",\n      \"fifty_two_week_high\": \"\u20b9417.95\",\n      \"revenue_growth\": \"-0.80%\",\n      \"profit_margin\": \"16.82%\",\n      \"total_cash\": \"\u20b929,609.45 crore\",\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"HDFCAMC.NS\",\n      \"name\": \"HDFC Asset Management Company Limited\",\n      \"market_cap\": \"\u20b91.01 lakh crore\",\n      \"price\": \"\u20b92,349.20\",\n      \"trailing_pe\": 33.93,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Asset Management\",\n      \"fifty_two_week_low\": \"\u20b92,205.60\",\n      \"fifty_two_week_high\": \"\u20b92,901.50\",\n      \"revenue_growth\": \"10.50%\",\n      \"profit_margin\": \"60.76%\",\n      \"total_cash\": \"\u20b945.07 crore\",\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ICICIAMC.NS\",\n      \"name\": \"ICICI Prudential Asset Management Company Limited\",\n      \"market_cap\": \"\u20b91.37 lakh crore\",\n      \"price\": \"\u20b92,775.50\",\n      \"trailing_pe\": 38.82,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Asset Management\",\n      \"fifty_two_week_low\": \"\u20b92,530.00\",\n      \"fifty_two_week_high\": \"\u20b93,611.00\",\n      \"revenue_growth\": \"11.90%\",\n      \"profit_margin\": \"54.75%\",\n      \"total_cash\": \"\u20b95,215.28 crore\",\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SBILIFE.NS\",\n      \"name\": \"SBI Life Insurance Company Limited\",\n      \"market_cap\": \"\u20b91.65 lakh crore\",\n      \"price\": \"\u20b91,647.80\",\n      \"trailing_pe\": 63.57,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Insurance - Life\",\n      \"fifty_two_week_low\": \"\u20b91,634.50\",\n      \"fifty_two_week_high\": \"\u20b92,132.00\",\n      \"revenue_growth\": \"18.80%\",\n      \"profit_margin\": \"2.14%\",\n      \"total_cash\": \"\u20b91,526.74 crore\",\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"STARHEALTH.NS\",\n      \"name\": \"Star Health and Allied Insurance Company Limited\",\n      \"market_cap\": \"\u20b931,894.41 crore\",\n      \"price\": \"\u20b9542.05\",\n      \"trailing_pe\": 37.85,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Insurance - Life\",\n      \"fifty_two_week_low\": \"\u20b9416.55\",\n      \"fifty_two_week_high\": \"\u20b9624.90\",\n      \"revenue_growth\": \"1407.80%\",\n      \"profit_margin\": \"3.62%\",\n      \"total_cash\": null,\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"NIACL.NS\",\n      \"name\": \"The New India Assurance Company Limited\",\n      \"market_cap\": \"\u20b928,676.85 crore\",\n      \"price\": \"\u20b9174.01\",\n      \"trailing_pe\": 37.18,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Insurance - Diversified\",\n      \"fifty_two_week_low\": \"\u20b9116.97\",\n      \"fifty_two_week_high\": \"\u20b9242.60\",\n      \"revenue_growth\": \"1.50%\",\n      \"profit_margin\": \"1.49%\",\n      \"total_cash\": \"\u20b921,949.15 crore\",\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"VOGL.NS\",\n      \"name\": \"Vedanta Oil and Gas Limited\",\n      \"market_cap\": \"\u20b911,911.58 crore\",\n      \"price\": \"\u20b930.51\",\n      \"trailing_pe\": null,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Other Industrial Metals & Mining\",\n      \"fifty_two_week_low\": \"\u20b929.12\",\n      \"fifty_two_week_high\": \"\u20b947.60\",\n      \"revenue_growth\": \"8.90%\",\n      \"profit_margin\": \"420.83%\",\n      \"total_cash\": null,\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"BSE.NS\",\n      \"name\": \"BSE Limited\",\n      \"market_cap\": \"\u20b91.35 lakh crore\",\n      \"price\": \"\u20b93,336.00\",\n      \"trailing_pe\": 48.53,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Financial Data & Stock Exchanges\",\n      \"fifty_two_week_low\": \"\u20b92,326.10\",\n      \"fifty_two_week_high\": \"\u20b94,446.80\",\n      \"revenue_growth\": \"64.00%\",\n      \"profit_margin\": \"48.92%\",\n      \"total_cash\": \"\u20b95,503.38 crore\",\n      \"total_debt\": \"\u20b90.02 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"GILLETTE.NS\",\n      \"name\": \"Gillette India Limited\",\n      \"market_cap\": \"\u20b923,669.90 crore\",\n      \"price\": \"\u20b97,264.00\",\n      \"trailing_pe\": 35.43,\n      \"sector\": \"Consumer Defensive\",\n      \"industry\": \"Household & Personal Products\",\n      \"fifty_two_week_low\": \"\u20b96,860.00\",\n      \"fifty_two_week_high\": \"\u20b99,664.00\",\n      \"revenue_growth\": \"10.80%\",\n      \"profit_margin\": \"21.04%\",\n      \"total_cash\": \"\u20b9269.26 crore\",\n      \"total_debt\": \"\u20b90.02 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\",\n  \"revenue_growth_caution\": \"Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution. Flagged rows: STARHEALTH.NS (1407.80%), BSE.NS (64.00%).\",\n  \"sort_note\": \"Sorted within each financial currency; amounts in different currencies are not compared.\",\n  \"currency_groups\": {\n    \"INR\": 494,\n    \"USD\": 2\n  },\n  \"note\": \"Rows reporting in INR (494) are ranked within that currency only. Rows in other currency groups are excluded from this ranking: USD (2): HCLTECH.NS, INFY.NS. Use financial_currency=\\\"USD\\\" to see those groups.\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "limit": 10,
+        "sort_order": "asc",
+        "sort_by": "total_debt"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "494",
+        "2",
+        "1",
+        "\u20b923,141.47 crore",
+        "\u20b90.00 crore",
+        "\u20b9831.59 crore",
+        "2",
+        "\u20b957,403.97 crore",
+        "\u20b90.00 crore",
+        "\u20b929,609.45 crore",
+        "3",
+        "\u20b91.01 lakh crore",
+        "\u20b90.00 crore",
+        "\u20b945.07 crore",
+        "4",
+        "\u20b91.37 lakh crore",
+        "\u20b90.00 crore",
+        "\u20b95,215.28 crore",
+        "5",
+        "\u20b91.65 lakh crore",
+        "\u20b90.00 crore",
+        "\u20b91,526.74 crore",
+        "6",
+        "\u20b931,894.41 crore",
+        "\u20b90.00 crore",
+        "1407.80%",
+        "50%",
+        "50%",
+        "7",
+        "\u20b928,676.85 crore",
+        "\u20b90.00 crore",
+        "\u20b921,949.15 crore",
+        "8",
+        "\u20b911,911.58 crore",
+        "\u20b90.00 crore",
+        "9",
+        "\u20b91.35 lakh crore",
+        "\u20b90.02 crore",
+        "\u20b95,503.38 crore",
+        "64.00%",
+        "50%",
+        "50%",
+        "10",
+        "\u20b923,669.90 crore",
+        "\u20b90.02 crore",
+        "\u20b9269.26 crore"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_02",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Show NSE companies with a negative profit margin, worst first.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "sort_order": "asc",
+          "sort_by": "profit_margin",
+          "max_profit_margin": -0.01
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Snapshot Date: 2026-10-20\n\nHere are the NSE companies with a negative profit margin, ordered from worst to least negative:\n\n1. **Ola Electric Mobility Limited** (`OLAELEC.NS`)\n   - **Sector / Industry:** Consumer Cyclical / Auto Manufacturers\n   - **Profit Margin:** -92.61%\n   - **Price:** \u20b934.49\n   - **Market Cap:** \u20b915,519.70 crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** -45.00%\n\n2. **Tejas Networks Limited** (`TEJASNET.NS`)\n   - **Sector / Industry:** Technology / Communication Equipment\n   - **Profit Margin:** -56.45%\n   - **Price:** \u20b9453.25\n   - **Market Cap:** \u20b98,063.75 crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** 54.90% *(Caution: values above 50% or below -50% often reflect mergers or accounting changes)*\n\n3. **Aditya Birla Real Estate Limited** (`ABREL.NS`)\n   - **Sector / Industry:** Real Estate / Real Estate Services\n   - **Profit Margin:** -25.42%\n   - **Price:** \u20b91,098.50\n   - **Market Cap:** \u20b912,146.98 crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** 29.70%\n\n4. **Urban Company Limited** (`URBANCO.NS`)\n   - **Sector / Industry:** Technology / Software - Application\n   - **Profit Margin:** -24.35%\n   - **Price:** \u20b9142.48\n   - **Market Cap:** \u20b921,126.82 crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** 41.40%\n\n5. **Swiggy Limited** (`SWIGGY.NS`)\n   - **Sector / Industry:** Consumer Cyclical / Internet Retail\n   - **Profit Margin:** -15.05%\n   - **Price:** \u20b9229.00\n   - **Market Cap:** \u20b960,063.30 crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** 37.30%\n\n6. **Tata Chemicals Limited** (`TATACHEM.NS`)\n   - **Sector / Industry:** Basic Materials / Chemicals\n   - **Profit Margin:** -14.32%\n   - **Price:** \u20b9637.65\n   - **Market Cap:** \u20b916,244.53 crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** 14.40%\n\n7. **Ather Energy Limited** (`ATHERENERG.NS`)\n   - **Sector / Industry:** Consumer Cyclical / Auto Manufacturers\n   - **Profit Margin:** -9.19%\n   - **Price:** \u20b91,459.00\n   - **Market Cap:** \u20b957,881.17 crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** 88.80% *(Caution: values above 50% or below -50% often reflect mergers or accounting changes)*\n\n8. **Meesho Limited** (`MEESHO.NS`)\n   - **Sector / Industry:** Consumer Cyclical / Internet Retail\n   - **Profit Margin:** -8.68%\n   - **Price:** \u20b9229.59\n   - **Market Cap:** \u20b91.06 lakh crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** 48.30%\n\n9. **RHI Magnesita India Limited** (`RHIM.NS`)\n   - **Sector / Industry:** Industrials / Metal Fabrication\n   - **Profit Margin:** -8.68%\n   - **Price:** \u20b9361.40\n   - **Market Cap:** \u20b97,462.96 crore\n   - **Latest-Quarter YoY Revenue Growth (Yahoo):** 5.60%\n\n10. **InterGlobe Aviation Limited** (`INDIGO.NS`)\n    - **Sector / Industry:** Industrials / Airlines\n    - **Profit Margin:** -5.40%\n    - **Price:** \u20b94,700.00\n    - **Market Cap:** \u20b91.82 lakh crore\n    - **Latest-Quarter YoY Revenue Growth (Yahoo):** 19.90%\n\n*(Note: This response reflects data from the local snapshot and is for informational purposes only, not financial advice.)*",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 497,\n  \"excluded_missing_data\": 3,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"OLAELEC.NS\",\n      \"name\": \"Ola Electric Mobility Limited\",\n      \"market_cap\": \"\u20b915,519.70 crore\",\n      \"price\": \"\u20b934.49\",\n      \"trailing_pe\": null,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Auto Manufacturers\",\n      \"fifty_two_week_low\": \"\u20b922.25\",\n      \"fifty_two_week_high\": \"\u20b954.48\",\n      \"revenue_growth\": \"-45.00%\",\n      \"profit_margin\": \"-92.61%\",\n      \"total_cash\": \"\u20b91,542.00 crore\",\n      \"total_debt\": \"\u20b92,763.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TEJASNET.NS\",\n      \"name\": \"Tejas Networks Limited\",\n      \"market_cap\": \"\u20b98,063.75 crore\",\n      \"price\": \"\u20b9453.25\",\n      \"trailing_pe\": null,\n      \"sector\": \"Technology\",\n      \"industry\": \"Communication Equipment\",\n      \"fifty_two_week_low\": \"\u20b9294.00\",\n      \"fifty_two_week_high\": \"\u20b9644.75\",\n      \"revenue_growth\": \"54.90%\",\n      \"profit_margin\": \"-56.45%\",\n      \"total_cash\": \"\u20b9450.96 crore\",\n      \"total_debt\": \"\u20b94,969.86 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ABREL.NS\",\n      \"name\": \"Aditya Birla Real Estate Limited\",\n      \"market_cap\": \"\u20b912,146.98 crore\",\n      \"price\": \"\u20b91,098.50\",\n      \"trailing_pe\": null,\n      \"sector\": \"Real Estate\",\n      \"industry\": \"Real Estate Services\",\n      \"fifty_two_week_low\": \"\u20b91,002.30\",\n      \"fifty_two_week_high\": \"\u20b91,914.00\",\n      \"revenue_growth\": \"29.70%\",\n      \"profit_margin\": \"-25.42%\",\n      \"total_cash\": \"\u20b92,372.93 crore\",\n      \"total_debt\": \"\u20b95,636.49 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"URBANCO.NS\",\n      \"name\": \"Urban Company Limited\",\n      \"market_cap\": \"\u20b921,126.82 crore\",\n      \"price\": \"\u20b9142.48\",\n      \"trailing_pe\": null,\n      \"sector\": \"Technology\",\n      \"industry\": \"Software - Application\",\n      \"fifty_two_week_low\": \"\u20b9100.70\",\n      \"fifty_two_week_high\": \"\u20b9183.97\",\n      \"revenue_growth\": \"41.40%\",\n      \"profit_margin\": \"-24.35%\",\n      \"total_cash\": \"\u20b91,770.25 crore\",\n      \"total_debt\": \"\u20b9141.56 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SWIGGY.NS\",\n      \"name\": \"Swiggy Limited\",\n      \"market_cap\": \"\u20b960,063.30 crore\",\n      \"price\": \"\u20b9229.00\",\n      \"trailing_pe\": null,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Internet Retail\",\n      \"fifty_two_week_low\": \"\u20b9228.45\",\n      \"fifty_two_week_high\": \"\u20b9434.00\",\n      \"revenue_growth\": \"37.30%\",\n      \"profit_margin\": \"-15.05%\",\n      \"total_cash\": \"\u20b911,152.00 crore\",\n      \"total_debt\": \"\u20b92,551.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TATACHEM.NS\",\n      \"name\": \"Tata Chemicals Limited\",\n      \"market_cap\": \"\u20b916,244.53 crore\",\n      \"price\": \"\u20b9637.65\",\n      \"trailing_pe\": null,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Chemicals\",\n      \"fifty_two_week_low\": \"\u20b9580.30\",\n      \"fifty_two_week_high\": \"\u20b9918.85\",\n      \"revenue_growth\": \"14.40%\",\n      \"profit_margin\": \"-14.32%\",\n      \"total_cash\": \"\u20b91,136.00 crore\",\n      \"total_debt\": \"\u20b98,001.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ATHERENERG.NS\",\n      \"name\": \"Ather Energy Limited\",\n      \"market_cap\": \"\u20b957,881.17 crore\",\n      \"price\": \"\u20b91,459.00\",\n      \"trailing_pe\": null,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Auto Manufacturers\",\n      \"fifty_two_week_low\": \"\u20b9582.05\",\n      \"fifty_two_week_high\": \"\u20b91,744.00\",\n      \"revenue_growth\": \"88.80%\",\n      \"profit_margin\": \"-9.19%\",\n      \"total_cash\": \"\u20b92,489.02 crore\",\n      \"total_debt\": \"\u20b9664.22 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"MEESHO.NS\",\n      \"name\": \"Meesho Limited\",\n      \"market_cap\": \"\u20b91.06 lakh crore\",\n      \"price\": \"\u20b9229.59\",\n      \"trailing_pe\": null,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Internet Retail\",\n      \"fifty_two_week_low\": \"\u20b9125.56\",\n      \"fifty_two_week_high\": \"\u20b9254.40\",\n      \"revenue_growth\": \"48.30%\",\n      \"profit_margin\": \"-8.68%\",\n      \"total_cash\": \"\u20b92,844.91 crore\",\n      \"total_debt\": \"\u20b962.63 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"RHIM.NS\",\n      \"name\": \"RHI Magnesita India Limited\",\n      \"market_cap\": \"\u20b97,462.96 crore\",\n      \"price\": \"\u20b9361.40\",\n      \"trailing_pe\": null,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Metal Fabrication\",\n      \"fifty_two_week_low\": \"\u20b9323.05\",\n      \"fifty_two_week_high\": \"\u20b9499.60\",\n      \"revenue_growth\": \"5.60%\",\n      \"profit_margin\": \"-8.68%\",\n      \"total_cash\": \"\u20b9390.73 crore\",\n      \"total_debt\": \"\u20b9448.44 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"INDIGO.NS\",\n      \"name\": \"InterGlobe Aviation Limited\",\n      \"market_cap\": \"\u20b91.82 lakh crore\",\n      \"price\": \"\u20b94,700.00\",\n      \"trailing_pe\": null,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Airlines\",\n      \"fifty_two_week_low\": \"\u20b93,895.20\",\n      \"fifty_two_week_high\": \"\u20b95,970.00\",\n      \"revenue_growth\": \"19.90%\",\n      \"profit_margin\": \"-5.40%\",\n      \"total_cash\": \"\u20b949,743.10 crore\",\n      \"total_debt\": \"\u20b977,749.20 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\",\n  \"revenue_growth_caution\": \"Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution. Flagged rows: TEJASNET.NS (54.90%), ATHERENERG.NS (88.80%).\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "sort_order": "asc",
+        "sort_by": "profit_margin",
+        "max_profit_margin": -0.01
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "1",
+        "92.61%",
+        "\u20b934.49",
+        "\u20b915,519.70 crore",
+        "45.00%",
+        "2",
+        "56.45%",
+        "\u20b9453.25",
+        "\u20b98,063.75 crore",
+        "54.90%",
+        "50%",
+        "50%",
+        "3",
+        "25.42%",
+        "\u20b91,098.50",
+        "\u20b912,146.98 crore",
+        "29.70%",
+        "4",
+        "24.35%",
+        "\u20b9142.48",
+        "\u20b921,126.82 crore",
+        "41.40%",
+        "5",
+        "15.05%",
+        "\u20b9229.00",
+        "\u20b960,063.30 crore",
+        "37.30%",
+        "6",
+        "14.32%",
+        "\u20b9637.65",
+        "\u20b916,244.53 crore",
+        "14.40%",
+        "7",
+        "9.19%",
+        "\u20b91,459.00",
+        "\u20b957,881.17 crore",
+        "88.80%",
+        "50%",
+        "50%",
+        "8",
+        "8.68%",
+        "\u20b9229.59",
+        "\u20b91.06 lakh crore",
+        "48.30%",
+        "9",
+        "8.68%",
+        "\u20b9361.40",
+        "\u20b97,462.96 crore",
+        "5.60%",
+        "10",
+        "5.40%",
+        "\u20b94,700.00",
+        "\u20b91.82 lakh crore",
+        "19.90%"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_03",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Top 5 NSE banks by market cap.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "sort_order": "desc",
+          "limit": 5,
+          "industry": "Banks",
+          "sort_by": "market_cap"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Snapshot date: 2026-10-20\n\nAliases applied: the industry filter resolved to `Banks - Regional` under `Financial Services`.\n\nTop 5 NSE banks by market cap:\n\n1. **HDFC Bank Limited** (HDFCBANK.NS)\n   - Market Cap: \u20b910.98 lakh crore\n   - Price: \u20b9712.00\n   - Trailing P/E: 15.56\n   - Latest-quarter YoY revenue growth (Yahoo): 80.80% *(Note: Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution.)*\n   - Profit Margin: 26.53%\n   - Total Cash: \u20b92.64 lakh crore\n   - Total Debt: \u20b95.94 lakh crore\n\n2. **ICICI Bank Limited** (ICICIBANK.NS)\n   - Market Cap: \u20b99.91 lakh crore\n   - Price: \u20b91,381.00\n   - Trailing P/E: 17.85\n   - Latest-quarter YoY revenue growth (Yahoo): 15.80%\n   - Profit Margin: 27.84%\n   - Total Cash: \u20b92.75 lakh crore\n   - Total Debt: \u20b92.96 lakh crore\n\n3. **State Bank of India** (SBIN.NS)\n   - Market Cap: \u20b98.99 lakh crore\n   - Price: \u20b9973.70\n   - Trailing P/E: 10.44\n   - Latest-quarter YoY revenue growth (Yahoo): 10.30%\n   - Profit Margin: 22.38%\n   - Total Cash: \u20b92.12 lakh crore\n   - Total Debt: \u20b98.2 lakh crore\n\n4. **Kotak Mahindra Bank Limited** (KOTAKBANK.NS)\n   - Market Cap: \u20b94.4 lakh crore\n   - Price: \u20b9442.30\n   - Trailing P/E: 21.68\n   - Latest-quarter YoY revenue growth (Yahoo): 21.00%\n   - Profit Margin: 28.47%\n   - Total Cash: \u20b972,932.22 crore\n   - Total Debt: \u20b91.12 lakh crore\n\n5. **Axis Bank Limited** (AXISBANK.NS)\n   - Market Cap: \u20b93.85 lakh crore\n   - Price: \u20b91,236.00\n   - Trailing P/E: 12.9\n   - Latest-quarter YoY revenue growth (Yahoo): 21.10%\n   - Profit Margin: 37.02%\n   - Total Cash: \u20b91.34 lakh crore\n   - Total Debt: \u20b93.24 lakh crore\n\n*(Note: For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.)*\n\nThis is informational only, not financial advice.",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 26,\n  \"excluded_missing_data\": 3,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"HDFCBANK.NS\",\n      \"name\": \"HDFC Bank Limited\",\n      \"market_cap\": \"\u20b910.98 lakh crore\",\n      \"price\": \"\u20b9712.00\",\n      \"trailing_pe\": 15.56,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9681.90\",\n      \"fifty_two_week_high\": \"\u20b91,020.50\",\n      \"revenue_growth\": \"80.80%\",\n      \"profit_margin\": \"26.53%\",\n      \"total_cash\": \"\u20b92.64 lakh crore\",\n      \"total_debt\": \"\u20b95.94 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ICICIBANK.NS\",\n      \"name\": \"ICICI Bank Limited\",\n      \"market_cap\": \"\u20b99.91 lakh crore\",\n      \"price\": \"\u20b91,381.00\",\n      \"trailing_pe\": 17.85,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b91,187.60\",\n      \"fifty_two_week_high\": \"\u20b91,480.00\",\n      \"revenue_growth\": \"15.80%\",\n      \"profit_margin\": \"27.84%\",\n      \"total_cash\": \"\u20b92.75 lakh crore\",\n      \"total_debt\": \"\u20b92.96 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SBIN.NS\",\n      \"name\": \"State Bank of India\",\n      \"market_cap\": \"\u20b98.99 lakh crore\",\n      \"price\": \"\u20b9973.70\",\n      \"trailing_pe\": 10.44,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9900.95\",\n      \"fifty_two_week_high\": \"\u20b91,234.70\",\n      \"revenue_growth\": \"10.30%\",\n      \"profit_margin\": \"22.38%\",\n      \"total_cash\": \"\u20b92.12 lakh crore\",\n      \"total_debt\": \"\u20b98.2 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"KOTAKBANK.NS\",\n      \"name\": \"Kotak Mahindra Bank Limited\",\n      \"market_cap\": \"\u20b94.4 lakh crore\",\n      \"price\": \"\u20b9442.30\",\n      \"trailing_pe\": 21.68,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9345.50\",\n      \"fifty_two_week_high\": \"\u20b9453.10\",\n      \"revenue_growth\": \"21.00%\",\n      \"profit_margin\": \"28.47%\",\n      \"total_cash\": \"\u20b972,932.22 crore\",\n      \"total_debt\": \"\u20b91.12 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"AXISBANK.NS\",\n      \"name\": \"Axis Bank Limited\",\n      \"market_cap\": \"\u20b93.85 lakh crore\",\n      \"price\": \"\u20b91,236.00\",\n      \"trailing_pe\": 12.9,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b91,150.30\",\n      \"fifty_two_week_high\": \"\u20b91,418.30\",\n      \"revenue_growth\": \"21.10%\",\n      \"profit_margin\": \"37.02%\",\n      \"total_cash\": \"\u20b91.34 lakh crore\",\n      \"total_debt\": \"\u20b93.24 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"aliases_applied\": {\n    \"banks\": {\n      \"industry\": \"Banks\",\n      \"matched_sectors\": [\n        \"Financial Services\"\n      ],\n      \"matched_industries\": [\n        \"Banks - Regional\"\n      ]\n    }\n  },\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\",\n  \"revenue_growth_caution\": \"Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution. Flagged rows: HDFCBANK.NS (80.80%).\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "sort_order": "desc",
+        "limit": 5,
+        "industry": "Banks",
+        "sort_by": "market_cap"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "5",
+        "1",
+        "\u20b910.98 lakh crore",
+        "\u20b9712.00",
+        "15.56",
+        "80.80%",
+        "50%",
+        "50%",
+        "26.53%",
+        "\u20b92.64 lakh crore",
+        "\u20b95.94 lakh crore",
+        "2",
+        "\u20b99.91 lakh crore",
+        "\u20b91,381.00",
+        "17.85",
+        "15.80%",
+        "27.84%",
+        "\u20b92.75 lakh crore",
+        "\u20b92.96 lakh crore",
+        "3",
+        "\u20b98.99 lakh crore",
+        "\u20b9973.70",
+        "10.44",
+        "10.30%",
+        "22.38%",
+        "\u20b92.12 lakh crore",
+        "\u20b98.2 lakh crore",
+        "4",
+        "\u20b94.4 lakh crore",
+        "\u20b9442.30",
+        "21.68",
+        "21.00%",
+        "28.47%",
+        "\u20b972,932.22 crore",
+        "\u20b91.12 lakh crore",
+        "5",
+        "\u20b93.85 lakh crore",
+        "\u20b91,236.00",
+        "12.9",
+        "21.10%",
+        "37.02%",
+        "\u20b91.34 lakh crore",
+        "\u20b93.24 lakh crore"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_03",
+    "turn": 1,
+    "repeat": 0,
+    "prompt": "Now only the ones with a P/E under 10.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "industry": "Banks",
+          "sort_by": "market_cap",
+          "sort_order": "desc",
+          "max_trailing_pe": 10,
+          "limit": 5
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Snapshot date: 2026-10-20\n\nAliases applied: the industry filter resolved to `Banks - Regional` under `Financial Services`.\n\nTop NSE banks with a P/E under 10, ranked by market cap:\n\n1. **Punjab National Bank** (PNB.NS)\n   - Market Cap: \u20b91.4 lakh crore\n   - Price: \u20b9121.90\n   - Trailing P/E: 6.14\n   - Latest-quarter YoY revenue growth (Yahoo): 7.40%\n   - Profit Margin: 38.78%\n   - Total Cash: \u20b91.53 lakh crore\n   - Total Debt: \u20b91.38 lakh crore\n\n2. **Union Bank of India** (UNIONBANK.NS)\n   - Market Cap: \u20b91.38 lakh crore\n   - Price: \u20b9180.70\n   - Trailing P/E: 6.27\n   - Latest-quarter YoY revenue growth (Yahoo): 15.60%\n   - Profit Margin: 41.46%\n   - Total Cash: \u20b954,362.22 crore\n   - Total Debt: \u20b91.02 lakh crore\n\n3. **Bank of Baroda Limited** (BANKBARODA.NS)\n   - Market Cap: \u20b91.23 lakh crore\n   - Price: \u20b9238.20\n   - Trailing P/E: 6.78\n   - Latest-quarter YoY revenue growth (Yahoo): 18.00%\n   - Profit Margin: 27.39%\n   - Total Cash: \u20b950,665.14 crore\n   - Total Debt: \u20b91.73 lakh crore\n\n4. **Indian Bank** (INDIANB.NS)\n   - Market Cap: \u20b91.15 lakh crore\n   - Price: \u20b9856.85\n   - Trailing P/E: 8.73\n   - Latest-quarter YoY revenue growth (Yahoo): 14.40%\n   - Profit Margin: 36.38%\n   - Total Cash: \u20b950,405.52 crore\n   - Total Debt: \u20b977,299.07 crore\n\n5. **Canara Bank** (CANBK.NS)\n   - Market Cap: \u20b91.11 lakh crore\n   - Price: \u20b9122.00\n   - Trailing P/E: 5.43\n   - Latest-quarter YoY revenue growth (Yahoo): -13.00%\n   - Profit Margin: 46.55%\n   - Total Cash: \u20b92.09 lakh crore\n   - Total Debt: \u20b91.68 lakh crore\n\n*(Note: For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.)*\n\nThis is informational only, not financial advice.",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 10,\n  \"excluded_missing_data\": 1,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"PNB.NS\",\n      \"name\": \"Punjab National Bank\",\n      \"market_cap\": \"\u20b91.4 lakh crore\",\n      \"price\": \"\u20b9121.90\",\n      \"trailing_pe\": 6.14,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b998.50\",\n      \"fifty_two_week_high\": \"\u20b9135.15\",\n      \"revenue_growth\": \"7.40%\",\n      \"profit_margin\": \"38.78%\",\n      \"total_cash\": \"\u20b91.53 lakh crore\",\n      \"total_debt\": \"\u20b91.38 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"UNIONBANK.NS\",\n      \"name\": \"Union Bank of India\",\n      \"market_cap\": \"\u20b91.38 lakh crore\",\n      \"price\": \"\u20b9180.70\",\n      \"trailing_pe\": 6.27,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9140.80\",\n      \"fifty_two_week_high\": \"\u20b9205.49\",\n      \"revenue_growth\": \"15.60%\",\n      \"profit_margin\": \"41.46%\",\n      \"total_cash\": \"\u20b954,362.22 crore\",\n      \"total_debt\": \"\u20b91.02 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"BANKBARODA.NS\",\n      \"name\": \"Bank of Baroda Limited\",\n      \"market_cap\": \"\u20b91.23 lakh crore\",\n      \"price\": \"\u20b9238.20\",\n      \"trailing_pe\": 6.78,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9223.82\",\n      \"fifty_two_week_high\": \"\u20b9325.50\",\n      \"revenue_growth\": \"18.00%\",\n      \"profit_margin\": \"27.39%\",\n      \"total_cash\": \"\u20b950,665.14 crore\",\n      \"total_debt\": \"\u20b91.73 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"INDIANB.NS\",\n      \"name\": \"Indian Bank\",\n      \"market_cap\": \"\u20b91.15 lakh crore\",\n      \"price\": \"\u20b9856.85\",\n      \"trailing_pe\": 8.73,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9764.05\",\n      \"fifty_two_week_high\": \"\u20b91,000.90\",\n      \"revenue_growth\": \"14.40%\",\n      \"profit_margin\": \"36.38%\",\n      \"total_cash\": \"\u20b950,405.52 crore\",\n      \"total_debt\": \"\u20b977,299.07 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"CANBK.NS\",\n      \"name\": \"Canara Bank\",\n      \"market_cap\": \"\u20b91.11 lakh crore\",\n      \"price\": \"\u20b9122.00\",\n      \"trailing_pe\": 5.43,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9116.51\",\n      \"fifty_two_week_high\": \"\u20b9162.89\",\n      \"revenue_growth\": \"-13.00%\",\n      \"profit_margin\": \"46.55%\",\n      \"total_cash\": \"\u20b92.09 lakh crore\",\n      \"total_debt\": \"\u20b91.68 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"aliases_applied\": {\n    \"banks\": {\n      \"industry\": \"Banks\",\n      \"matched_sectors\": [\n        \"Financial Services\"\n      ],\n      \"matched_industries\": [\n        \"Banks - Regional\"\n      ]\n    }\n  },\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "industry": "Banks",
+        "sort_by": "market_cap",
+        "sort_order": "desc",
+        "max_trailing_pe": 10,
+        "limit": 5
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "10",
+        "1",
+        "\u20b91.4 lakh crore",
+        "\u20b9121.90",
+        "6.14",
+        "7.40%",
+        "38.78%",
+        "\u20b91.53 lakh crore",
+        "\u20b91.38 lakh crore",
+        "2",
+        "\u20b91.38 lakh crore",
+        "\u20b9180.70",
+        "6.27",
+        "15.60%",
+        "41.46%",
+        "\u20b954,362.22 crore",
+        "\u20b91.02 lakh crore",
+        "3",
+        "\u20b91.23 lakh crore",
+        "\u20b9238.20",
+        "6.78",
+        "18.00%",
+        "27.39%",
+        "\u20b950,665.14 crore",
+        "\u20b91.73 lakh crore",
+        "4",
+        "\u20b91.15 lakh crore",
+        "\u20b9856.85",
+        "8.73",
+        "14.40%",
+        "36.38%",
+        "\u20b950,405.52 crore",
+        "\u20b977,299.07 crore",
+        "5",
+        "\u20b91.11 lakh crore",
+        "\u20b9122.00",
+        "5.43",
+        "13.00%",
+        "46.55%",
+        "\u20b92.09 lakh crore",
+        "\u20b91.68 lakh crore"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_04",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Show the 10 largest NSE companies by market cap.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "sort_by": "market_cap",
+          "limit": 10,
+          "sort_order": "desc"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Snapshot date: 2026-10-20\n\nHere are the 10 largest NSE companies by market cap:\n\n1. **Reliance Industries Limited** (RELIANCE.NS)\n   - Market Cap: \u20b916.27 lakh crore\n   - Sector: Energy\n   - Price: \u20b91,202.00\n   - Trailing P/E: 21.77\n\n2. **Bharti Airtel Limited** (BHARTIARTL.NS)\n   - Market Cap: \u20b911.7 lakh crore\n   - Sector: Communication Services\n   - Price: \u20b91,875.20\n   - Trailing P/E: 39.2\n\n3. **HDFC Bank Limited** (HDFCBANK.NS)\n   - Market Cap: \u20b910.98 lakh crore\n   - Sector: Financial Services\n   - Price: \u20b9712.00\n   - Trailing P/E: 15.56\n   - *Note:* Latest-quarter YoY revenue growth (80.80%) is above 50%, which often reflects mergers or accounting changes; treat with caution. For Financial Services rows, debt and cash are not comparable with other sectors.\n\n4. **ICICI Bank Limited** (ICICIBANK.NS)\n   - Market Cap: \u20b99.91 lakh crore\n   - Sector: Financial Services\n   - Price: \u20b91,381.00\n   - Trailing P/E: 17.85\n   - *Note:* For Financial Services rows, debt and cash are not comparable with other sectors.\n\n5. **State Bank of India** (SBIN.NS)\n   - Market Cap: \u20b98.99 lakh crore\n   - Sector: Financial Services\n   - Price: \u20b9973.70\n   - Trailing P/E: 10.44\n   - *Note:* For Financial Services rows, debt and cash are not comparable with other sectors.\n\n6. **Tata Consultancy Services Limited** (TCS.NS)\n   - Market Cap: \u20b98.9 lakh crore\n   - Sector: Technology\n   - Price: \u20b92,460.90\n   - Trailing P/E: 17.25\n\n7. **Bajaj Finance Limited** (BAJFINANCE.NS)\n   - Market Cap: \u20b95.96 lakh crore\n   - Sector: Financial Services\n   - Price: \u20b9957.35\n   - Trailing P/E: 29.39\n   - *Note:* For Financial Services rows, debt and cash are not comparable with other sectors.\n\n8. **Larsen & Toubro Limited** (LT.NS)\n   - Market Cap: \u20b95.04 lakh crore\n   - Sector: Industrials\n   - Price: \u20b93,661.90\n   - Trailing P/E: 30.38\n\n9. **Life Insurance Corporation of India** (LICI.NS)\n   - Market Cap: \u20b94.98 lakh crore\n   - Sector: Financial Services\n   - Price: \u20b9393.35\n   - Trailing P/E: 8.28\n   - *Note:* For Financial Services rows, debt and cash are not comparable with other sectors.\n\n10. **Infosys Limited** (INFY.NS)\n    - Market Cap: \u20b94.58 lakh crore\n    - Sector: Technology\n    - Price: \u20b91,130.70\n    - Trailing P/E: 15.4\n    - *Note:* Balance sheet figures report in USD (Total Cash: USD 3,124,000,000.00, Total Debt: USD 923,000,000.00), so they are not directly comparable in currency with INR amounts.",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 497,\n  \"excluded_missing_data\": 3,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"RELIANCE.NS\",\n      \"name\": \"Reliance Industries Limited\",\n      \"market_cap\": \"\u20b916.27 lakh crore\",\n      \"price\": \"\u20b91,202.00\",\n      \"trailing_pe\": 21.77,\n      \"sector\": \"Energy\",\n      \"industry\": \"Oil & Gas Refining & Marketing\",\n      \"fifty_two_week_low\": \"\u20b91,152.20\",\n      \"fifty_two_week_high\": \"\u20b91,611.80\",\n      \"revenue_growth\": \"29.70%\",\n      \"profit_margin\": \"6.61%\",\n      \"total_cash\": \"\u20b92.59 lakh crore\",\n      \"total_debt\": \"\u20b95.03 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"BHARTIARTL.NS\",\n      \"name\": \"Bharti Airtel Limited\",\n      \"market_cap\": \"\u20b911.7 lakh crore\",\n      \"price\": \"\u20b91,875.20\",\n      \"trailing_pe\": 39.2,\n      \"sector\": \"Communication Services\",\n      \"industry\": \"Telecom Services\",\n      \"fifty_two_week_low\": \"\u20b91,726.30\",\n      \"fifty_two_week_high\": \"\u20b92,174.50\",\n      \"revenue_growth\": \"18.40%\",\n      \"profit_margin\": \"13.14%\",\n      \"total_cash\": \"\u20b958,409.30 crore\",\n      \"total_debt\": \"\u20b92.01 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"HDFCBANK.NS\",\n      \"name\": \"HDFC Bank Limited\",\n      \"market_cap\": \"\u20b910.98 lakh crore\",\n      \"price\": \"\u20b9712.00\",\n      \"trailing_pe\": 15.56,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9681.90\",\n      \"fifty_two_week_high\": \"\u20b91,020.50\",\n      \"revenue_growth\": \"80.80%\",\n      \"profit_margin\": \"26.53%\",\n      \"total_cash\": \"\u20b92.64 lakh crore\",\n      \"total_debt\": \"\u20b95.94 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ICICIBANK.NS\",\n      \"name\": \"ICICI Bank Limited\",\n      \"market_cap\": \"\u20b99.91 lakh crore\",\n      \"price\": \"\u20b91,381.00\",\n      \"trailing_pe\": 17.85,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b91,187.60\",\n      \"fifty_two_week_high\": \"\u20b91,480.00\",\n      \"revenue_growth\": \"15.80%\",\n      \"profit_margin\": \"27.84%\",\n      \"total_cash\": \"\u20b92.75 lakh crore\",\n      \"total_debt\": \"\u20b92.96 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SBIN.NS\",\n      \"name\": \"State Bank of India\",\n      \"market_cap\": \"\u20b98.99 lakh crore\",\n      \"price\": \"\u20b9973.70\",\n      \"trailing_pe\": 10.44,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9900.95\",\n      \"fifty_two_week_high\": \"\u20b91,234.70\",\n      \"revenue_growth\": \"10.30%\",\n      \"profit_margin\": \"22.38%\",\n      \"total_cash\": \"\u20b92.12 lakh crore\",\n      \"total_debt\": \"\u20b98.2 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TCS.NS\",\n      \"name\": \"Tata Consultancy Services Limited\",\n      \"market_cap\": \"\u20b98.9 lakh crore\",\n      \"price\": \"\u20b92,460.90\",\n      \"trailing_pe\": 17.25,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b91,976.80\",\n      \"fifty_two_week_high\": \"\u20b93,350.00\",\n      \"revenue_growth\": \"11.20%\",\n      \"profit_margin\": \"18.22%\",\n      \"total_cash\": \"\u20b951,024.00 crore\",\n      \"total_debt\": \"\u20b911,808.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"BAJFINANCE.NS\",\n      \"name\": \"Bajaj Finance Limited\",\n      \"market_cap\": \"\u20b95.96 lakh crore\",\n      \"price\": \"\u20b9957.35\",\n      \"trailing_pe\": 29.39,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Credit Services\",\n      \"fifty_two_week_low\": \"\u20b9787.90\",\n      \"fifty_two_week_high\": \"\u20b91,176.40\",\n      \"revenue_growth\": \"26.70%\",\n      \"profit_margin\": \"43.75%\",\n      \"total_cash\": \"\u20b918,409.67 crore\",\n      \"total_debt\": \"\u20b94.33 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"LT.NS\",\n      \"name\": \"Larsen & Toubro Limited\",\n      \"market_cap\": \"\u20b95.04 lakh crore\",\n      \"price\": \"\u20b93,661.90\",\n      \"trailing_pe\": 30.38,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Engineering & Construction\",\n      \"fifty_two_week_low\": \"\u20b93,288.10\",\n      \"fifty_two_week_high\": \"\u20b94,440.00\",\n      \"revenue_growth\": \"8.10%\",\n      \"profit_margin\": \"5.59%\",\n      \"total_cash\": \"\u20b976,614.65 crore\",\n      \"total_debt\": \"\u20b91.25 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"LICI.NS\",\n      \"name\": \"Life Insurance Corporation of India\",\n      \"market_cap\": \"\u20b94.98 lakh crore\",\n      \"price\": \"\u20b9393.35\",\n      \"trailing_pe\": 8.28,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Insurance - Life\",\n      \"fifty_two_week_low\": \"\u20b9360.75\",\n      \"fifty_two_week_high\": \"\u20b9468.48\",\n      \"revenue_growth\": \"6.80%\",\n      \"profit_margin\": \"6.51%\",\n      \"total_cash\": \"\u20b973,141.75 crore\",\n      \"total_debt\": \"\u20b9761.92 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"INFY.NS\",\n      \"name\": \"Infosys Limited\",\n      \"market_cap\": \"\u20b94.58 lakh crore\",\n      \"price\": \"\u20b91,130.70\",\n      \"trailing_pe\": 15.4,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b9980.40\",\n      \"fifty_two_week_high\": \"\u20b91,728.00\",\n      \"revenue_growth\": \"2.90%\",\n      \"profit_margin\": \"16.37%\",\n      \"total_cash\": \"USD 3,124,000,000.00\",\n      \"total_debt\": \"USD 923,000,000.00\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"USD\"\n    }\n  ],\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\",\n  \"revenue_growth_caution\": \"Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution. Flagged rows: HDFCBANK.NS (80.80%).\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "sort_by": "market_cap",
+        "limit": 10,
+        "sort_order": "desc"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "10",
+        "1",
+        "\u20b916.27 lakh crore",
+        "\u20b91,202.00",
+        "21.77",
+        "2",
+        "\u20b911.7 lakh crore",
+        "\u20b91,875.20",
+        "39.2",
+        "3",
+        "\u20b910.98 lakh crore",
+        "\u20b9712.00",
+        "15.56",
+        "80.80%",
+        "50%",
+        "4",
+        "\u20b99.91 lakh crore",
+        "\u20b91,381.00",
+        "17.85",
+        "5",
+        "\u20b98.99 lakh crore",
+        "\u20b9973.70",
+        "10.44",
+        "6",
+        "\u20b98.9 lakh crore",
+        "\u20b92,460.90",
+        "17.25",
+        "7",
+        "\u20b95.96 lakh crore",
+        "\u20b9957.35",
+        "29.39",
+        "8",
+        "\u20b95.04 lakh crore",
+        "\u20b93,661.90",
+        "30.38",
+        "9",
+        "\u20b94.98 lakh crore",
+        "\u20b9393.35",
+        "8.28",
+        "10",
+        "\u20b94.58 lakh crore",
+        "\u20b91,130.70",
+        "15.4",
+        "3,124,000,000.00",
+        "923,000,000.00"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_04",
+    "turn": 1,
+    "repeat": 0,
+    "prompt": "Show the next 10.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "sort_by": "market_cap",
+          "sort_order": "desc",
+          "offset": 10,
+          "limit": 10
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Snapshot date: 2026-10-20\n\nHere are the next 10 largest NSE companies by market cap (ranks 11 to 20):\n\n11. **Kotak Mahindra Bank Limited** (KOTAKBANK.NS)\n    - Market Cap: \u20b94.4 lakh crore\n    - Sector: Financial Services\n    - Price: \u20b9442.30\n    - Trailing P/E: 21.68\n    - *Note:* For Financial Services rows, debt and cash are not comparable with other sectors.\n\n12. **Hindustan Unilever Limited** (HINDUNILVR.NS)\n    - Market Cap: \u20b94.35 lakh crore\n    - Sector: Consumer Defensive\n    - Price: \u20b91,853.20\n    - Trailing P/E: 41.55\n\n13. **Sun Pharmaceutical Industries Limited** (SUNPHARMA.NS)\n    - Market Cap: \u20b94.18 lakh crore\n    - Sector: Healthcare\n    - Price: \u20b91,743.00\n    - Trailing P/E: 34.58\n\n14. **Adani Ports and Special Economic Zone Limited** (ADANIPORTS.NS)\n    - Market Cap: \u20b94.07 lakh crore\n    - Sector: Industrials\n    - Price: \u20b91,766.00\n    - Trailing P/E: 30.14\n\n15. **Titan Company Limited** (TITAN.NS)\n    - Market Cap: \u20b93.93 lakh crore\n    - Sector: Consumer Cyclical\n    - Price: \u20b94,424.20\n    - Trailing P/E: 68.19\n\n16. **Axis Bank Limited** (AXISBANK.NS)\n    - Market Cap: \u20b93.85 lakh crore\n    - Sector: Financial Services\n    - Price: \u20b91,236.00\n    - Trailing P/E: 12.9\n    - *Note:* For Financial Services rows, debt and cash are not comparable with other sectors.\n\n17. **Adani Power Limited** (ADANIPOWER.NS)\n    - Market Cap: \u20b93.74 lakh crore\n    - Sector: Utilities\n    - Price: \u20b9194.08\n    - Trailing P/E: 26.26\n\n18. **HCL Technologies Limited** (HCLTECH.NS)\n    - Market Cap: \u20b93.73 lakh crore\n    - Sector: Technology\n    - Price: \u20b91,379.90\n    - Trailing P/E: 20.42\n    - *Note:* Balance sheet figures report in USD (Total Cash: USD 2,436,999,936.00, Total Debt: USD 628,000,000.00), so they are not directly comparable in currency with INR amounts.\n\n19. **Maruti Suzuki India Limited** (MARUTI.NS)\n    - Market Cap: \u20b93.61 lakh crore\n    - Sector: Consumer Cyclical\n    - Price: \u20b911,475.00\n    - Trailing P/E: 25.17\n\n20. **Adani Enterprises Limited** (ADANIENT.NS)\n    - Market Cap: \u20b93.6 lakh crore\n    - Sector: Energy\n    - Price: \u20b92,657.50\n    - Trailing P/E: 42.84",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 497,\n  \"excluded_missing_data\": 3,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"KOTAKBANK.NS\",\n      \"name\": \"Kotak Mahindra Bank Limited\",\n      \"market_cap\": \"\u20b94.4 lakh crore\",\n      \"price\": \"\u20b9442.30\",\n      \"trailing_pe\": 21.68,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9345.50\",\n      \"fifty_two_week_high\": \"\u20b9453.10\",\n      \"revenue_growth\": \"21.00%\",\n      \"profit_margin\": \"28.47%\",\n      \"total_cash\": \"\u20b972,932.22 crore\",\n      \"total_debt\": \"\u20b91.12 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"HINDUNILVR.NS\",\n      \"name\": \"Hindustan Unilever Limited\",\n      \"market_cap\": \"\u20b94.35 lakh crore\",\n      \"price\": \"\u20b91,853.20\",\n      \"trailing_pe\": 41.55,\n      \"sector\": \"Consumer Defensive\",\n      \"industry\": \"Household & Personal Products\",\n      \"fifty_two_week_low\": \"\u20b91,814.40\",\n      \"fifty_two_week_high\": \"\u20b92,667.20\",\n      \"revenue_growth\": \"5.00%\",\n      \"profit_margin\": \"22.64%\",\n      \"total_cash\": \"\u20b96,993.00 crore\",\n      \"total_debt\": \"\u20b91,478.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SUNPHARMA.NS\",\n      \"name\": \"Sun Pharmaceutical Industries Limited\",\n      \"market_cap\": \"\u20b94.18 lakh crore\",\n      \"price\": \"\u20b91,743.00\",\n      \"trailing_pe\": 34.58,\n      \"sector\": \"Healthcare\",\n      \"industry\": \"Drug Manufacturers - Specialty & Generic\",\n      \"fifty_two_week_low\": \"\u20b91,583.70\",\n      \"fifty_two_week_high\": \"\u20b92,046.90\",\n      \"revenue_growth\": \"10.50%\",\n      \"profit_margin\": \"20.19%\",\n      \"total_cash\": \"\u20b933,516.58 crore\",\n      \"total_debt\": \"\u20b94,627.32 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ADANIPORTS.NS\",\n      \"name\": \"Adani Ports and Special Economic Zone Limited\",\n      \"market_cap\": \"\u20b94.07 lakh crore\",\n      \"price\": \"\u20b91,766.00\",\n      \"trailing_pe\": 30.14,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Marine Shipping\",\n      \"fifty_two_week_low\": \"\u20b91,292.00\",\n      \"fifty_two_week_high\": \"\u20b91,891.10\",\n      \"revenue_growth\": \"18.60%\",\n      \"profit_margin\": \"32.43%\",\n      \"total_cash\": \"\u20b97,284.73 crore\",\n      \"total_debt\": \"\u20b963,398.99 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TITAN.NS\",\n      \"name\": \"Titan Company Limited\",\n      \"market_cap\": \"\u20b93.93 lakh crore\",\n      \"price\": \"\u20b94,424.20\",\n      \"trailing_pe\": 68.19,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Luxury Goods\",\n      \"fifty_two_week_low\": \"\u20b93,667.30\",\n      \"fifty_two_week_high\": \"\u20b95,186.70\",\n      \"revenue_growth\": \"29.30%\",\n      \"profit_margin\": \"6.23%\",\n      \"total_cash\": \"\u20b93,861.00 crore\",\n      \"total_debt\": \"\u20b930,621.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"AXISBANK.NS\",\n      \"name\": \"Axis Bank Limited\",\n      \"market_cap\": \"\u20b93.85 lakh crore\",\n      \"price\": \"\u20b91,236.00\",\n      \"trailing_pe\": 12.9,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b91,150.30\",\n      \"fifty_two_week_high\": \"\u20b91,418.30\",\n      \"revenue_growth\": \"21.10%\",\n      \"profit_margin\": \"37.02%\",\n      \"total_cash\": \"\u20b91.34 lakh crore\",\n      \"total_debt\": \"\u20b93.24 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ADANIPOWER.NS\",\n      \"name\": \"Adani Power Limited\",\n      \"market_cap\": \"\u20b93.74 lakh crore\",\n      \"price\": \"\u20b9194.08\",\n      \"trailing_pe\": 26.26,\n      \"sector\": \"Utilities\",\n      \"industry\": \"Utilities - Independent Power Producers\",\n      \"fifty_two_week_low\": \"\u20b9128.10\",\n      \"fifty_two_week_high\": \"\u20b9254.20\",\n      \"revenue_growth\": \"34.00%\",\n      \"profit_margin\": \"24.15%\",\n      \"total_cash\": \"\u20b92,436.19 crore\",\n      \"total_debt\": \"\u20b954,670.29 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"HCLTECH.NS\",\n      \"name\": \"HCL Technologies Limited\",\n      \"market_cap\": \"\u20b93.73 lakh crore\",\n      \"price\": \"\u20b91,379.90\",\n      \"trailing_pe\": 20.42,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b91,030.00\",\n      \"fifty_two_week_high\": \"\u20b91,780.10\",\n      \"revenue_growth\": \"2.20%\",\n      \"profit_margin\": \"13.25%\",\n      \"total_cash\": \"USD 2,436,999,936.00\",\n      \"total_debt\": \"USD 628,000,000.00\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"USD\"\n    },\n    {\n      \"symbol\": \"MARUTI.NS\",\n      \"name\": \"Maruti Suzuki India Limited\",\n      \"market_cap\": \"\u20b93.61 lakh crore\",\n      \"price\": \"\u20b911,475.00\",\n      \"trailing_pe\": 25.17,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Auto Manufacturers\",\n      \"fifty_two_week_low\": \"\u20b911,125.00\",\n      \"fifty_two_week_high\": \"\u20b917,370.00\",\n      \"revenue_growth\": \"35.90%\",\n      \"profit_margin\": \"7.27%\",\n      \"total_cash\": \"\u20b917,345.80 crore\",\n      \"total_debt\": \"\u20b9102.50 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ADANIENT.NS\",\n      \"name\": \"Adani Enterprises Limited\",\n      \"market_cap\": \"\u20b93.6 lakh crore\",\n      \"price\": \"\u20b92,657.50\",\n      \"trailing_pe\": 42.84,\n      \"sector\": \"Energy\",\n      \"industry\": \"Thermal Coal\",\n      \"fifty_two_week_low\": \"\u20b91,753.00\",\n      \"fifty_two_week_high\": \"\u20b93,245.00\",\n      \"revenue_growth\": \"49.90%\",\n      \"profit_margin\": \"6.55%\",\n      \"total_cash\": \"\u20b99,808.40 crore\",\n      \"total_debt\": \"\u20b91.07 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "sort_by": "market_cap",
+        "sort_order": "desc",
+        "offset": 10,
+        "limit": 10
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "10",
+        "11",
+        "20",
+        "11",
+        "\u20b94.4 lakh crore",
+        "\u20b9442.30",
+        "21.68",
+        "12",
+        "\u20b94.35 lakh crore",
+        "\u20b91,853.20",
+        "41.55",
+        "13",
+        "\u20b94.18 lakh crore",
+        "\u20b91,743.00",
+        "34.58",
+        "14",
+        "\u20b94.07 lakh crore",
+        "\u20b91,766.00",
+        "30.14",
+        "15",
+        "\u20b93.93 lakh crore",
+        "\u20b94,424.20",
+        "68.19",
+        "16",
+        "\u20b93.85 lakh crore",
+        "\u20b91,236.00",
+        "12.9",
+        "17",
+        "\u20b93.74 lakh crore",
+        "\u20b9194.08",
+        "26.26",
+        "18",
+        "\u20b93.73 lakh crore",
+        "\u20b91,379.90",
+        "20.42",
+        "2,436,999,936.00",
+        "628,000,000.00",
+        "19",
+        "\u20b93.61 lakh crore",
+        "\u20b911,475.00",
+        "25.17",
+        "20",
+        "\u20b93.6 lakh crore",
+        "\u20b92,657.50",
+        "42.84"
+      ],
+      "ungrounded": [
+        {
+          "value": 11.0,
+          "text": "11",
+          "context": "y market cap (ranks 11 to 20):  11. **Kota"
+        }
+      ]
+    }
+  },
+  {
+    "case": "heldout_05",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "NSE stocks with a market cap above 5 lakh crore rupees.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "min_market_cap_crore": 500000
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "**NSE Stocks with a Market Cap Above \u20b95 Lakh Crore**\n*Snapshot Date: 2026-10-20*\n\n1. **Reliance Industries Limited** (`RELIANCE.NS`)\n   * Sector: Energy | Industry: Oil & Gas Refining & Marketing\n   * Market Cap: \u20b916.27 lakh crore\n   * Price: \u20b91,202.00\n   * Trailing P/E: 21.77\n   * Profit Margin: 6.61%\n   * Latest-quarter YoY Revenue Growth: 29.70%\n   * Total Cash: \u20b92.59 lakh crore | Total Debt: \u20b95.03 lakh crore\n\n2. **Bharti Airtel Limited** (`BHARTIARTL.NS`)\n   * Sector: Communication Services | Industry: Telecom Services\n   * Market Cap: \u20b911.7 lakh crore\n   * Price: \u20b91,875.20\n   * Trailing P/E: 39.2\n   * Profit Margin: 13.14%\n   * Latest-quarter YoY Revenue Growth: 18.40%\n   * Total Cash: \u20b958,409.30 crore | Total Debt: \u20b92.01 lakh crore\n\n3. **HDFC Bank Limited** (`HDFCBANK.NS`)\n   * Sector: Financial Services | Industry: Banks - Regional\n   * Market Cap: \u20b910.98 lakh crore\n   * Price: \u20b9712.00\n   * Trailing P/E: 15.56\n   * Profit Margin: 26.53%\n   * Latest-quarter YoY Revenue Growth: 80.80% *(Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution.)*\n   * Total Cash: \u20b92.64 lakh crore | Total Debt: \u20b95.94 lakh crore\n\n4. **ICICI Bank Limited** (`ICICIBANK.NS`)\n   * Sector: Financial Services | Industry: Banks - Regional\n   * Market Cap: \u20b99.91 lakh crore\n   * Price: \u20b91,381.00\n   * Trailing P/E: 17.85\n   * Profit Margin: 27.84%\n   * Latest-quarter YoY Revenue Growth: 15.80%\n   * Total Cash: \u20b92.75 lakh crore | Total Debt: \u20b92.96 lakh crore\n\n5. **State Bank of India** (`SBIN.NS`)\n   * Sector: Financial Services | Industry: Banks - Regional\n   * Market Cap: \u20b98.99 lakh crore\n   * Price: \u20b9973.70\n   * Trailing P/E: 10.44\n   * Profit Margin: 22.38%\n   * Latest-quarter YoY Revenue Growth: 10.30%\n   * Total Cash: \u20b92.12 lakh crore | Total Debt: \u20b98.2 lakh crore\n\n6. **Tata Consultancy Services Limited** (`TCS.NS`)\n   * Sector: Technology | Industry: Information Technology Services\n   * Market Cap: \u20b98.9 lakh crore\n   * Price: \u20b92,460.90\n   * Trailing P/E: 17.25\n   * Profit Margin: 18.22%\n   * Latest-quarter YoY Revenue Growth: 11.20%\n   * Total Cash: \u20b951,024.00 crore | Total Debt: \u20b911,808.00 crore\n\n7. **Bajaj Finance Limited** (`BAJFINANCE.NS`)\n   * Sector: Financial Services | Industry: Credit Services\n   * Market Cap: \u20b95.96 lakh crore\n   * Price: \u20b9957.35\n   * Trailing P/E: 29.39\n   * Profit Margin: 43.75%\n   * Latest-quarter YoY Revenue Growth: 26.70%\n   * Total Cash: \u20b918,409.67 crore | Total Debt: \u20b94.33 lakh crore\n\n8. **Larsen & Toubro Limited** (`LT.NS`)\n   * Sector: Industrials | Industry: Engineering & Construction\n   * Market Cap: \u20b95.04 lakh crore\n   * Price: \u20b93,661.90\n   * Trailing P/E: 30.38\n   * Profit Margin: 5.59%\n   * Latest-quarter YoY Revenue Growth: 8.10%\n   * Total Cash: \u20b976,614.65 crore | Total Debt: \u20b91.25 lakh crore\n\n*(Note: For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.)*\n\nThis is informational only, not financial advice.",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 8,\n  \"excluded_missing_data\": 3,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"RELIANCE.NS\",\n      \"name\": \"Reliance Industries Limited\",\n      \"market_cap\": \"\u20b916.27 lakh crore\",\n      \"price\": \"\u20b91,202.00\",\n      \"trailing_pe\": 21.77,\n      \"sector\": \"Energy\",\n      \"industry\": \"Oil & Gas Refining & Marketing\",\n      \"fifty_two_week_low\": \"\u20b91,152.20\",\n      \"fifty_two_week_high\": \"\u20b91,611.80\",\n      \"revenue_growth\": \"29.70%\",\n      \"profit_margin\": \"6.61%\",\n      \"total_cash\": \"\u20b92.59 lakh crore\",\n      \"total_debt\": \"\u20b95.03 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"BHARTIARTL.NS\",\n      \"name\": \"Bharti Airtel Limited\",\n      \"market_cap\": \"\u20b911.7 lakh crore\",\n      \"price\": \"\u20b91,875.20\",\n      \"trailing_pe\": 39.2,\n      \"sector\": \"Communication Services\",\n      \"industry\": \"Telecom Services\",\n      \"fifty_two_week_low\": \"\u20b91,726.30\",\n      \"fifty_two_week_high\": \"\u20b92,174.50\",\n      \"revenue_growth\": \"18.40%\",\n      \"profit_margin\": \"13.14%\",\n      \"total_cash\": \"\u20b958,409.30 crore\",\n      \"total_debt\": \"\u20b92.01 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"HDFCBANK.NS\",\n      \"name\": \"HDFC Bank Limited\",\n      \"market_cap\": \"\u20b910.98 lakh crore\",\n      \"price\": \"\u20b9712.00\",\n      \"trailing_pe\": 15.56,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9681.90\",\n      \"fifty_two_week_high\": \"\u20b91,020.50\",\n      \"revenue_growth\": \"80.80%\",\n      \"profit_margin\": \"26.53%\",\n      \"total_cash\": \"\u20b92.64 lakh crore\",\n      \"total_debt\": \"\u20b95.94 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ICICIBANK.NS\",\n      \"name\": \"ICICI Bank Limited\",\n      \"market_cap\": \"\u20b99.91 lakh crore\",\n      \"price\": \"\u20b91,381.00\",\n      \"trailing_pe\": 17.85,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b91,187.60\",\n      \"fifty_two_week_high\": \"\u20b91,480.00\",\n      \"revenue_growth\": \"15.80%\",\n      \"profit_margin\": \"27.84%\",\n      \"total_cash\": \"\u20b92.75 lakh crore\",\n      \"total_debt\": \"\u20b92.96 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SBIN.NS\",\n      \"name\": \"State Bank of India\",\n      \"market_cap\": \"\u20b98.99 lakh crore\",\n      \"price\": \"\u20b9973.70\",\n      \"trailing_pe\": 10.44,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9900.95\",\n      \"fifty_two_week_high\": \"\u20b91,234.70\",\n      \"revenue_growth\": \"10.30%\",\n      \"profit_margin\": \"22.38%\",\n      \"total_cash\": \"\u20b92.12 lakh crore\",\n      \"total_debt\": \"\u20b98.2 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TCS.NS\",\n      \"name\": \"Tata Consultancy Services Limited\",\n      \"market_cap\": \"\u20b98.9 lakh crore\",\n      \"price\": \"\u20b92,460.90\",\n      \"trailing_pe\": 17.25,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b91,976.80\",\n      \"fifty_two_week_high\": \"\u20b93,350.00\",\n      \"revenue_growth\": \"11.20%\",\n      \"profit_margin\": \"18.22%\",\n      \"total_cash\": \"\u20b951,024.00 crore\",\n      \"total_debt\": \"\u20b911,808.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"BAJFINANCE.NS\",\n      \"name\": \"Bajaj Finance Limited\",\n      \"market_cap\": \"\u20b95.96 lakh crore\",\n      \"price\": \"\u20b9957.35\",\n      \"trailing_pe\": 29.39,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Credit Services\",\n      \"fifty_two_week_low\": \"\u20b9787.90\",\n      \"fifty_two_week_high\": \"\u20b91,176.40\",\n      \"revenue_growth\": \"26.70%\",\n      \"profit_margin\": \"43.75%\",\n      \"total_cash\": \"\u20b918,409.67 crore\",\n      \"total_debt\": \"\u20b94.33 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"LT.NS\",\n      \"name\": \"Larsen & Toubro Limited\",\n      \"market_cap\": \"\u20b95.04 lakh crore\",\n      \"price\": \"\u20b93,661.90\",\n      \"trailing_pe\": 30.38,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Engineering & Construction\",\n      \"fifty_two_week_low\": \"\u20b93,288.10\",\n      \"fifty_two_week_high\": \"\u20b94,440.00\",\n      \"revenue_growth\": \"8.10%\",\n      \"profit_margin\": \"5.59%\",\n      \"total_cash\": \"\u20b976,614.65 crore\",\n      \"total_debt\": \"\u20b91.25 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\",\n  \"revenue_growth_caution\": \"Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution. Flagged rows: HDFCBANK.NS (80.80%).\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "min_market_cap_crore": 500000
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "\u20b95 Lakh Crore",
+        "2026",
+        "10",
+        "20",
+        "1",
+        "\u20b916.27 lakh crore",
+        "\u20b91,202.00",
+        "21.77",
+        "6.61%",
+        "29.70%",
+        "\u20b92.59 lakh crore",
+        "\u20b95.03 lakh crore",
+        "2",
+        "\u20b911.7 lakh crore",
+        "\u20b91,875.20",
+        "39.2",
+        "13.14%",
+        "18.40%",
+        "\u20b958,409.30 crore",
+        "\u20b92.01 lakh crore",
+        "3",
+        "\u20b910.98 lakh crore",
+        "\u20b9712.00",
+        "15.56",
+        "26.53%",
+        "80.80%",
+        "50%",
+        "50%",
+        "\u20b92.64 lakh crore",
+        "\u20b95.94 lakh crore",
+        "4",
+        "\u20b99.91 lakh crore",
+        "\u20b91,381.00",
+        "17.85",
+        "27.84%",
+        "15.80%",
+        "\u20b92.75 lakh crore",
+        "\u20b92.96 lakh crore",
+        "5",
+        "\u20b98.99 lakh crore",
+        "\u20b9973.70",
+        "10.44",
+        "22.38%",
+        "10.30%",
+        "\u20b92.12 lakh crore",
+        "\u20b98.2 lakh crore",
+        "6",
+        "\u20b98.9 lakh crore",
+        "\u20b92,460.90",
+        "17.25",
+        "18.22%",
+        "11.20%",
+        "\u20b951,024.00 crore",
+        "\u20b911,808.00 crore",
+        "7",
+        "\u20b95.96 lakh crore",
+        "\u20b9957.35",
+        "29.39",
+        "43.75%",
+        "26.70%",
+        "\u20b918,409.67 crore",
+        "\u20b94.33 lakh crore",
+        "8",
+        "\u20b95.04 lakh crore",
+        "\u20b93,661.90",
+        "30.38",
+        "5.59%",
+        "8.10%",
+        "\u20b976,614.65 crore",
+        "\u20b91.25 lakh crore"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_06",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Which NSE stocks trade below 100 rupees?",
+    "attempt": 1,
+    "guard": "on",
+    "status": "fail",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "limit": 25,
+          "sort_by": "price",
+          "financial_currency": "INR",
+          "sort_order": "asc"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [
+      "answer did not match required pattern: \\b(?:cannot|can't|not supported|unable)\\b"
+    ],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Here are some of the NSE-listed stocks trading below 100 rupees, based on the snapshot date of **2026-10-20**:\n\n* **Vodafone Idea Limited** (`IDEA.NS`) \u2013 \u20b912.28\n* **Jaiprakash Power Ventures Limited** (`JPPOWER.NS`) \u2013 \u20b914.91\n* **Yes Bank Limited** (`YESBANK.NS`) \u2013 \u20b916.88\n* **IRB Infrastructure Developers Limited** (`IRB.NS`) \u2013 \u20b917.37\n* **Reliance Power Limited** (`RPOWER.NS`) \u2013 \u20b917.89\n* **Trident Limited** (`TRIDENT.NS`) \u2013 \u20b921.92\n* **UCO Bank Loan** (`UCOBANK.NS`) \u2013 \u20b923.61\n* **Vedanta Iron and Steel Limited** (`VISL.NS`) \u2013 \u20b928.92\n* **Vedanta Oil and Gas Limited** (`VOGL.NS`) \u2013 \u20b930.51\n* **Indian Overseas Bank** (`IOB.NS`) \u2013 \u20b930.71\n* **Central Bank of India** (`CENTRALBK.NS`) \u2013 \u20b930.97\n* **Bharat Coking Coal Limited** (`BHARATCOAL.NS`) \u2013 \u20b931.38\n* **Vedanta Power Limited** (`VEDPOWER.NS`) \u2013 \u20b932.00\n* **Tata Teleservices (Maharashtra) Limited** (`TTML.NS`) \u2013 \u20b932.87\n* **Ola Electric Mobility Limited** (`OLAELEC.NS`) \u2013 \u20b934.49\n* **Motherson Sumi Wiring India Limited** (`MSUMI.NS`) \u2013 \u20b935.38\n* **NMDC Steel Limited** (`NSLNISP.NS`) \u2013 \u20b940.22\n* **Suzlon Energy Limited** (`SUZLON.NS`) \u2013 \u20b940.38\n* **Sagility Limited** (`SAGILITY.NS`) \u2013 \u20b943.99\n* **SJVN Limited** (`SJVN.NS`) \u2013 \u20b951.11 *(Note: Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution).*\n* **MMTC Limited** (`MMTC.NS`) \u2013 \u20b954.89\n* **IFCI Limited** (`IFCI.NS`) \u2013 \u20b964.85\n* **Inox Wind Limited** (`INOXWIND.NS`) \u2013 \u20b964.89\n* **NMDC Limited** (`NMDC.NS`) \u2013 \u20b970.50\n* **NHPC Limited** (`NHPC.NS`) \u2013 \u20b970.70\n\n*(Note: For Financial Services rows such as Yes Bank, UCO Bank, Indian Overseas Bank, Central Bank of India, and IFCI, debt and cash figures are not comparable with debt and cash values from other sectors.)*",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 497,\n  \"excluded_missing_data\": 1,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"IDEA.NS\",\n      \"name\": \"Vodafone Idea Limited\",\n      \"market_cap\": \"\u20b91.33 lakh crore\",\n      \"price\": \"\u20b912.28\",\n      \"trailing_pe\": 3.56,\n      \"sector\": \"Communication Services\",\n      \"industry\": \"Telecom Services\",\n      \"fifty_two_week_low\": \"\u20b98.13\",\n      \"fifty_two_week_high\": \"\u20b915.79\",\n      \"revenue_growth\": \"6.10%\",\n      \"profit_margin\": \"82.28%\",\n      \"total_cash\": \"\u20b93,715.00 crore\",\n      \"total_debt\": \"\u20b91.93 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"JPPOWER.NS\",\n      \"name\": \"Jaiprakash Power Ventures Limited\",\n      \"market_cap\": \"\u20b910,218.51 crore\",\n      \"price\": \"\u20b914.91\",\n      \"trailing_pe\": 27.11,\n      \"sector\": \"Utilities\",\n      \"industry\": \"Utilities - Independent Power Producers\",\n      \"fifty_two_week_low\": \"\u20b913.15\",\n      \"fifty_two_week_high\": \"\u20b924.50\",\n      \"revenue_growth\": \"12.20%\",\n      \"profit_margin\": \"11.14%\",\n      \"total_cash\": \"\u20b9754.95 crore\",\n      \"total_debt\": \"\u20b93,391.08 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"YESBANK.NS\",\n      \"name\": \"Yes Bank Limited\",\n      \"market_cap\": \"\u20b952,985.92 crore\",\n      \"price\": \"\u20b916.88\",\n      \"trailing_pe\": 12.79,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b916.81\",\n      \"fifty_two_week_high\": \"\u20b925.78\",\n      \"revenue_growth\": \"23.70%\",\n      \"profit_margin\": \"24.48%\",\n      \"total_cash\": \"\u20b943,413.52 crore\",\n      \"total_debt\": \"\u20b978,410.10 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"IRB.NS\",\n      \"name\": \"IRB Infrastructure Developers Limited\",\n      \"market_cap\": \"\u20b920,979.49 crore\",\n      \"price\": \"\u20b917.37\",\n      \"trailing_pe\": 21.99,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Infrastructure Operations\",\n      \"fifty_two_week_low\": \"\u20b916.75\",\n      \"fifty_two_week_high\": \"\u20b923.95\",\n      \"revenue_growth\": \"-8.90%\",\n      \"profit_margin\": \"15.48%\",\n      \"total_cash\": \"\u20b92,092.16 crore\",\n      \"total_debt\": \"\u20b920,027.06 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"RPOWER.NS\",\n      \"name\": \"Reliance Power Limited\",\n      \"market_cap\": \"\u20b97,398.89 crore\",\n      \"price\": \"\u20b917.89\",\n      \"trailing_pe\": null,\n      \"sector\": \"Utilities\",\n      \"industry\": \"Utilities - Independent Power Producers\",\n      \"fifty_two_week_low\": \"\u20b917.65\",\n      \"fifty_two_week_high\": \"\u20b947.75\",\n      \"revenue_growth\": \"3.80%\",\n      \"profit_margin\": \"-4.12%\",\n      \"total_cash\": \"\u20b91,705.16 crore\",\n      \"total_debt\": \"\u20b914,812.03 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TRIDENT.NS\",\n      \"name\": \"Trident Limited\",\n      \"market_cap\": \"\u20b911,169.52 crore\",\n      \"price\": \"\u20b921.92\",\n      \"trailing_pe\": 28.1,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Textile Manufacturing\",\n      \"fifty_two_week_low\": \"\u20b921.60\",\n      \"fifty_two_week_high\": \"\u20b930.94\",\n      \"revenue_growth\": \"4.70%\",\n      \"profit_margin\": \"5.83%\",\n      \"total_cash\": \"\u20b9469.04 crore\",\n      \"total_debt\": \"\u20b91,828.53 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"UCOBANK.NS\",\n      \"name\": \"UCO Bank\",\n      \"market_cap\": \"\u20b929,605.90 crore\",\n      \"price\": \"\u20b923.61\",\n      \"trailing_pe\": 9.92,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b922.22\",\n      \"fifty_two_week_high\": \"\u20b934.20\",\n      \"revenue_growth\": \"4.90%\",\n      \"profit_margin\": \"22.57%\",\n      \"total_cash\": \"\u20b924,021.32 crore\",\n      \"total_debt\": \"\u20b926,074.91 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"VISL.NS\",\n      \"name\": \"Vedanta Iron and Steel Limited\",\n      \"market_cap\": \"\u20b911,308.84 crore\",\n      \"price\": \"\u20b928.92\",\n      \"trailing_pe\": null,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Steel\",\n      \"fifty_two_week_low\": \"\u20b919.06\",\n      \"fifty_two_week_high\": \"\u20b944.78\",\n      \"revenue_growth\": \"12.30%\",\n      \"profit_margin\": \"64.22%\",\n      \"total_cash\": \"\u20b90.01 crore\",\n      \"total_debt\": \"\u20b90.06 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"VOGL.NS\",\n      \"name\": \"Vedanta Oil and Gas Limited\",\n      \"market_cap\": \"\u20b911,911.58 crore\",\n      \"price\": \"\u20b930.51\",\n      \"trailing_pe\": null,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Other Industrial Metals & Mining\",\n      \"fifty_two_week_low\": \"\u20b929.12\",\n      \"fifty_two_week_high\": \"\u20b947.60\",\n      \"revenue_growth\": \"8.90%\",\n      \"profit_margin\": \"420.83%\",\n      \"total_cash\": null,\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"IOB.NS\",\n      \"name\": \"Indian Overseas Bank\",\n      \"market_cap\": \"\u20b959,136.99 crore\",\n      \"price\": \"\u20b930.71\",\n      \"trailing_pe\": 10.04,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b930.06\",\n      \"fifty_two_week_high\": \"\u20b941.80\",\n      \"revenue_growth\": \"48.10%\",\n      \"profit_margin\": \"36.56%\",\n      \"total_cash\": \"\u20b919,735.71 crore\",\n      \"total_debt\": \"\u20b947,239.90 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"CENTRALBK.NS\",\n      \"name\": \"Central Bank of India\",\n      \"market_cap\": \"\u20b928,032.19 crore\",\n      \"price\": \"\u20b930.97\",\n      \"trailing_pe\": 6.14,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b929.32\",\n      \"fifty_two_week_high\": \"\u20b940.92\",\n      \"revenue_growth\": \"11.00%\",\n      \"profit_margin\": \"28.47%\",\n      \"total_cash\": \"\u20b942,944.64 crore\",\n      \"total_debt\": \"\u20b938,908.14 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"BHARATCOAL.NS\",\n      \"name\": \"Bharat Coking Coal Limited\",\n      \"market_cap\": null,\n      \"price\": \"\u20b931.38\",\n      \"trailing_pe\": null,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Coking Coal\",\n      \"fifty_two_week_low\": \"\u20b929.74\",\n      \"fifty_two_week_high\": \"\u20b945.09\",\n      \"revenue_growth\": \"-3.60%\",\n      \"profit_margin\": \"-0.86%\",\n      \"total_cash\": \"\u20b9970.35 crore\",\n      \"total_debt\": \"\u20b92,241.74 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"VEDPOWER.NS\",\n      \"name\": \"Vedanta Power Limited\",\n      \"market_cap\": \"\u20b912,493.30 crore\",\n      \"price\": \"\u20b932.00\",\n      \"trailing_pe\": null,\n      \"sector\": \"Utilities\",\n      \"industry\": \"Utilities - Independent Power Producers\",\n      \"fifty_two_week_low\": \"\u20b929.90\",\n      \"fifty_two_week_high\": \"\u20b949.88\",\n      \"revenue_growth\": \"31.00%\",\n      \"profit_margin\": \"0.61%\",\n      \"total_cash\": null,\n      \"total_debt\": null,\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TTML.NS\",\n      \"name\": \"Tata Teleservices (Maharashtra) Limited\",\n      \"market_cap\": \"\u20b96,425.85 crore\",\n      \"price\": \"\u20b932.87\",\n      \"trailing_pe\": 173.0,\n      \"sector\": \"Communication Services\",\n      \"industry\": \"Telecom Services\",\n      \"fifty_two_week_low\": \"\u20b931.22\",\n      \"fifty_two_week_high\": \"\u20b958.25\",\n      \"revenue_growth\": \"6.10%\",\n      \"profit_margin\": \"3.19%\",\n      \"total_cash\": \"\u20b938.55 crore\",\n      \"total_debt\": \"\u20b920,868.92 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"OLAELEC.NS\",\n      \"name\": \"Ola Electric Mobility Limited\",\n      \"market_cap\": \"\u20b915,519.70 crore\",\n      \"price\": \"\u20b934.49\",\n      \"trailing_pe\": null,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Auto Manufacturers\",\n      \"fifty_two_week_low\": \"\u20b922.25\",\n      \"fifty_two_week_high\": \"\u20b954.48\",\n      \"revenue_growth\": \"-45.00%\",\n      \"profit_margin\": \"-92.61%\",\n      \"total_cash\": \"\u20b91,542.00 crore\",\n      \"total_debt\": \"\u20b92,763.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"MSUMI.NS\",\n      \"name\": \"Motherson Sumi Wiring India Limited\",\n      \"market_cap\": \"\u20b923,462.82 crore\",\n      \"price\": \"\u20b935.38\",\n      \"trailing_pe\": 37.24,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Auto Parts\",\n      \"fifty_two_week_low\": \"\u20b932.70\",\n      \"fifty_two_week_high\": \"\u20b953.59\",\n      \"revenue_growth\": \"36.40%\",\n      \"profit_margin\": \"5.09%\",\n      \"total_cash\": \"\u20b966.20 crore\",\n      \"total_debt\": \"\u20b9233.20 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"NSLNISP.NS\",\n      \"name\": \"NMDC Steel Limited\",\n      \"market_cap\": \"\u20b911,786.90 crore\",\n      \"price\": \"\u20b940.22\",\n      \"trailing_pe\": 138.69,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Steel\",\n      \"fifty_two_week_low\": \"\u20b933.01\",\n      \"fifty_two_week_high\": \"\u20b953.75\",\n      \"revenue_growth\": \"8.80%\",\n      \"profit_margin\": \"0.60%\",\n      \"total_cash\": \"\u20b9799.98 crore\",\n      \"total_debt\": \"\u20b94,613.18 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SUZLON.NS\",\n      \"name\": \"Suzlon Energy Limited\",\n      \"market_cap\": \"\u20b955,508.05 crore\",\n      \"price\": \"\u20b940.38\",\n      \"trailing_pe\": 17.71,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Specialty Industrial Machinery\",\n      \"fifty_two_week_low\": \"\u20b936.31\",\n      \"fifty_two_week_high\": \"\u20b961.50\",\n      \"revenue_growth\": \"22.50%\",\n      \"profit_margin\": \"18.09%\",\n      \"total_cash\": \"\u20b92,599.00 crore\",\n      \"total_debt\": \"\u20b9277.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SAGILITY.NS\",\n      \"name\": \"Sagility Limited\",\n      \"market_cap\": \"\u20b920,593.17 crore\",\n      \"price\": \"\u20b943.99\",\n      \"trailing_pe\": 20.75,\n      \"sector\": \"Healthcare\",\n      \"industry\": \"Health Information Services\",\n      \"fifty_two_week_low\": \"\u20b935.83\",\n      \"fifty_two_week_high\": \"\u20b957.89\",\n      \"revenue_growth\": \"27.60%\",\n      \"profit_margin\": \"13.04%\",\n      \"total_cash\": \"\u20b9903.79 crore\",\n      \"total_debt\": \"\u20b91,110.53 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"SJVN.NS\",\n      \"name\": \"SJVN Limited\",\n      \"market_cap\": \"\u20b920,085.18 crore\",\n      \"price\": \"\u20b951.11\",\n      \"trailing_pe\": 31.55,\n      \"sector\": \"Utilities\",\n      \"industry\": \"Utilities - Renewable\",\n      \"fifty_two_week_low\": \"\u20b951.00\",\n      \"fifty_two_week_high\": \"\u20b990.40\",\n      \"revenue_growth\": \"52.00%\",\n      \"profit_margin\": \"12.77%\",\n      \"total_cash\": \"\u20b92,522.52 crore\",\n      \"total_debt\": \"\u20b932,278.49 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"MMTC.NS\",\n      \"name\": \"MMTC Limited\",\n      \"market_cap\": \"\u20b98,233.50 crore\",\n      \"price\": \"\u20b954.89\",\n      \"trailing_pe\": 18.42,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Conglomerates\",\n      \"fifty_two_week_low\": \"\u20b950.10\",\n      \"fifty_two_week_high\": \"\u20b978.35\",\n      \"revenue_growth\": \"-50.00%\",\n      \"profit_margin\": \"16386.81%\",\n      \"total_cash\": \"\u20b91,788.67 crore\",\n      \"total_debt\": \"\u20b92.42 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"IFCI.NS\",\n      \"name\": \"IFCI Limited\",\n      \"market_cap\": \"\u20b917,472.63 crore\",\n      \"price\": \"\u20b964.85\",\n      \"trailing_pe\": 101.33,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Credit Services\",\n      \"fifty_two_week_low\": \"\u20b946.23\",\n      \"fifty_two_week_high\": \"\u20b9107.50\",\n      \"revenue_growth\": \"-6.30%\",\n      \"profit_margin\": \"12.70%\",\n      \"total_cash\": \"\u20b97,102.14 crore\",\n      \"total_debt\": \"\u20b93,523.02 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"INOXWIND.NS\",\n      \"name\": \"Inox Wind Limited\",\n      \"market_cap\": \"\u20b911,214.54 crore\",\n      \"price\": \"\u20b964.89\",\n      \"trailing_pe\": 26.93,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Specialty Industrial Machinery\",\n      \"fifty_two_week_low\": \"\u20b962.43\",\n      \"fifty_two_week_high\": \"\u20b9159.30\",\n      \"revenue_growth\": \"-1.50%\",\n      \"profit_margin\": \"7.83%\",\n      \"total_cash\": \"\u20b9611.72 crore\",\n      \"total_debt\": \"\u20b91,586.95 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"NMDC.NS\",\n      \"name\": \"NMDC Limited\",\n      \"market_cap\": \"\u20b961,982.31 crore\",\n      \"price\": \"\u20b970.50\",\n      \"trailing_pe\": 8.3,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Steel\",\n      \"fifty_two_week_low\": \"\u20b970.10\",\n      \"fifty_two_week_high\": \"\u20b997.49\",\n      \"revenue_growth\": \"0.80%\",\n      \"profit_margin\": \"23.22%\",\n      \"total_cash\": \"\u20b911,394.76 crore\",\n      \"total_debt\": \"\u20b96,406.81 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"NHPC.NS\",\n      \"name\": \"NHPC Limited\",\n      \"market_cap\": \"\u20b971,018.39 crore\",\n      \"price\": \"\u20b970.70\",\n      \"trailing_pe\": 18.7,\n      \"sector\": \"Utilities\",\n      \"industry\": \"Utilities - Renewable\",\n      \"fifty_two_week_low\": \"\u20b970.25\",\n      \"fifty_two_week_high\": \"\u20b987.29\",\n      \"revenue_growth\": \"18.50%\",\n      \"profit_margin\": \"31.09%\",\n      \"total_cash\": \"\u20b93,661.84 crore\",\n      \"total_debt\": \"\u20b954,751.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\",\n  \"revenue_growth_caution\": \"Latest-quarter YoY revenue growth above 50% or below -50% often reflects mergers or accounting changes; treat these values with caution. Flagged rows: SJVN.NS (52.00%).\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "limit": 25,
+        "sort_by": "price",
+        "financial_currency": "INR",
+        "sort_order": "asc"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "100",
+        "2026",
+        "10",
+        "20",
+        "\u20b912.28",
+        "\u20b914.91",
+        "\u20b916.88",
+        "\u20b917.37",
+        "\u20b917.89",
+        "\u20b921.92",
+        "\u20b923.61",
+        "\u20b928.92",
+        "\u20b930.51",
+        "\u20b930.71",
+        "\u20b930.97",
+        "\u20b931.38",
+        "\u20b932.00",
+        "\u20b932.87",
+        "\u20b934.49",
+        "\u20b935.38",
+        "\u20b940.22",
+        "\u20b940.38",
+        "\u20b943.99",
+        "\u20b951.11",
+        "50%",
+        "50%",
+        "\u20b954.89",
+        "\u20b964.85",
+        "\u20b964.89",
+        "\u20b970.50",
+        "\u20b970.70"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_07",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Which Nifty stocks are closest to their 52-week low?",
+    "attempt": 1,
+    "guard": "on",
+    "status": "fail",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "sort_order": "asc",
+          "limit": 10,
+          "sort_by": "price"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [
+      "answer did not match required pattern: \\b(?:cannot|can't|not supported|unable)\\b"
+    ],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Based on the local snapshot (dated 2026-10-20), the screener tool sorts by price rather than distance to 52-week low directly, but here are the Indian stocks trading closest to their 52-week lows by lowest current price:\n\n1. **Vodafone Idea Limited** (IDEA.NS)\n   - **Price:** \u20b912.28\n   - **52-Week Low:** \u20b98.13\n   - **52-Week High:** \u20b915.79\n   - **Market Cap:** \u20b91.33 lakh crore\n\n2. **Jaiprakash Power Ventures Limited** (JPPOWER.NS)\n   - **Price:** \u20b914.91\n   - **52-Week Low:** \u20b913.15\n   - **52-Week High:** \u20b924.50\n   - **Market Cap:** \u20b910,218.51 crore\n\n3. **Yes Bank Limited** (YESBANK.NS)\n   - **Price:** \u20b916.88\n   - **52-Week Low:** \u20b916.81\n   - **52-Week High:** \u20b925.78\n   - **Market Cap:** \u20b952,985.92 crore\n\n4. **IRB Infrastructure Developers Limited** (IRB.NS)\n   - **Price:** \u20b917.37\n   - **52-Week Low:** \u20b916.75\n   - **52-Week High:** \u20b923.95\n   - **Market Cap:** \u20b920,979.49 crore\n\n5. **Reliance Power Limited** (RPOWER.NS)\n   - **Price:** \u20b917.89\n   - **52-Week Low:** \u20b917.65\n   - **52-Week High:** \u20b947.75\n   - **Market Cap:** \u20b97,398.89 crore\n\n*Note: This is informational only, not financial advice.*",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 499,\n  \"excluded_missing_data\": 1,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"IDEA.NS\",\n      \"name\": \"Vodafone Idea Limited\",\n      \"market_cap\": \"\u20b91.33 lakh crore\",\n      \"price\": \"\u20b912.28\",\n      \"trailing_pe\": 3.56,\n      \"sector\": \"Communication Services\",\n      \"industry\": \"Telecom Services\",\n      \"fifty_two_week_low\": \"\u20b98.13\",\n      \"fifty_two_week_high\": \"\u20b915.79\",\n      \"revenue_growth\": \"6.10%\",\n      \"profit_margin\": \"82.28%\",\n      \"total_cash\": \"\u20b93,715.00 crore\",\n      \"total_debt\": \"\u20b91.93 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"JPPOWER.NS\",\n      \"name\": \"Jaiprakash Power Ventures Limited\",\n      \"market_cap\": \"\u20b910,218.51 crore\",\n      \"price\": \"\u20b914.91\",\n      \"trailing_pe\": 27.11,\n      \"sector\": \"Utilities\",\n      \"industry\": \"Utilities - Independent Power Producers\",\n      \"fifty_two_week_low\": \"\u20b913.15\",\n      \"fifty_two_week_high\": \"\u20b924.50\",\n      \"revenue_growth\": \"12.20%\",\n      \"profit_margin\": \"11.14%\",\n      \"total_cash\": \"\u20b9754.95 crore\",\n      \"total_debt\": \"\u20b93,391.08 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"YESBANK.NS\",\n      \"name\": \"Yes Bank Limited\",\n      \"market_cap\": \"\u20b952,985.92 crore\",\n      \"price\": \"\u20b916.88\",\n      \"trailing_pe\": 12.79,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b916.81\",\n      \"fifty_two_week_high\": \"\u20b925.78\",\n      \"revenue_growth\": \"23.70%\",\n      \"profit_margin\": \"24.48%\",\n      \"total_cash\": \"\u20b943,413.52 crore\",\n      \"total_debt\": \"\u20b978,410.10 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"IRB.NS\",\n      \"name\": \"IRB Infrastructure Developers Limited\",\n      \"market_cap\": \"\u20b920,979.49 crore\",\n      \"price\": \"\u20b917.37\",\n      \"trailing_pe\": 21.99,\n      \"sector\": \"Industrials\",\n      \"industry\": \"Infrastructure Operations\",\n      \"fifty_two_week_low\": \"\u20b916.75\",\n      \"fifty_two_week_high\": \"\u20b923.95\",\n      \"revenue_growth\": \"-8.90%\",\n      \"profit_margin\": \"15.48%\",\n      \"total_cash\": \"\u20b92,092.16 crore\",\n      \"total_debt\": \"\u20b920,027.06 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"RPOWER.NS\",\n      \"name\": \"Reliance Power Limited\",\n      \"market_cap\": \"\u20b97,398.89 crore\",\n      \"price\": \"\u20b917.89\",\n      \"trailing_pe\": null,\n      \"sector\": \"Utilities\",\n      \"industry\": \"Utilities - Independent Power Producers\",\n      \"fifty_two_week_low\": \"\u20b917.65\",\n      \"fifty_two_week_high\": \"\u20b947.75\",\n      \"revenue_growth\": \"3.80%\",\n      \"profit_margin\": \"-4.12%\",\n      \"total_cash\": \"\u20b91,705.16 crore\",\n      \"total_debt\": \"\u20b914,812.03 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TRIDENT.NS\",\n      \"name\": \"Trident Limited\",\n      \"market_cap\": \"\u20b911,169.52 crore\",\n      \"price\": \"\u20b921.92\",\n      \"trailing_pe\": 28.1,\n      \"sector\": \"Consumer Cyclical\",\n      \"industry\": \"Textile Manufacturing\",\n      \"fifty_two_week_low\": \"\u20b921.60\",\n      \"fifty_two_week_high\": \"\u20b930.94\",\n      \"revenue_growth\": \"4.70%\",\n      \"profit_margin\": \"5.83%\",\n      \"total_cash\": \"\u20b9469.04 crore\",\n      \"total_debt\": \"\u20b91,828.53 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"UCOBANK.NS\",\n      \"name\": \"UCO Bank\",\n      \"market_cap\": \"\u20b929,605.90 crore\",\n      \"price\": \"\u20b923.61\",\n      \"trailing_pe\": 9.92,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b922.22\",\n      \"fifty_two_week_high\": \"\u20b934.20\",\n      \"revenue_growth\": \"4.90%\",\n      \"profit_margin\": \"22.57%\",\n      \"total_cash\": \"\u20b924,021.32 crore\",\n      \"total_debt\": \"\u20b926,074.91 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"VISL.NS\",\n      \"name\": \"Vedanta Iron and Steel Limited\",\n      \"market_cap\": \"\u20b911,308.84 crore\",\n      \"price\": \"\u20b928.92\",\n      \"trailing_pe\": null,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Steel\",\n      \"fifty_two_week_low\": \"\u20b919.06\",\n      \"fifty_two_week_high\": \"\u20b944.78\",\n      \"revenue_growth\": \"12.30%\",\n      \"profit_margin\": \"64.22%\",\n      \"total_cash\": \"\u20b90.01 crore\",\n      \"total_debt\": \"\u20b90.06 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"VOGL.NS\",\n      \"name\": \"Vedanta Oil and Gas Limited\",\n      \"market_cap\": \"\u20b911,911.58 crore\",\n      \"price\": \"\u20b930.51\",\n      \"trailing_pe\": null,\n      \"sector\": \"Basic Materials\",\n      \"industry\": \"Other Industrial Metals & Mining\",\n      \"fifty_two_week_low\": \"\u20b929.12\",\n      \"fifty_two_week_high\": \"\u20b947.60\",\n      \"revenue_growth\": \"8.90%\",\n      \"profit_margin\": \"420.83%\",\n      \"total_cash\": null,\n      \"total_debt\": \"\u20b90.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"IOB.NS\",\n      \"name\": \"Indian Overseas Bank\",\n      \"market_cap\": \"\u20b959,136.99 crore\",\n      \"price\": \"\u20b930.71\",\n      \"trailing_pe\": 10.04,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b930.06\",\n      \"fifty_two_week_high\": \"\u20b941.80\",\n      \"revenue_growth\": \"48.10%\",\n      \"profit_margin\": \"36.56%\",\n      \"total_cash\": \"\u20b919,735.71 crore\",\n      \"total_debt\": \"\u20b947,239.90 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "sort_order": "asc",
+        "limit": 10,
+        "sort_by": "price"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "52",
+        "52",
+        "1",
+        "\u20b912.28",
+        "52",
+        "\u20b98.13",
+        "52",
+        "\u20b915.79",
+        "\u20b91.33 lakh crore",
+        "2",
+        "\u20b914.91",
+        "52",
+        "\u20b913.15",
+        "52",
+        "\u20b924.50",
+        "\u20b910,218.51 crore",
+        "3",
+        "\u20b916.88",
+        "52",
+        "\u20b916.81",
+        "52",
+        "\u20b925.78",
+        "\u20b952,985.92 crore",
+        "4",
+        "\u20b917.37",
+        "52",
+        "\u20b916.75",
+        "52",
+        "\u20b923.95",
+        "\u20b920,979.49 crore",
+        "5",
+        "\u20b917.89",
+        "52",
+        "\u20b917.65",
+        "52",
+        "\u20b947.75",
+        "\u20b97,398.89 crore"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_08",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Pharma companies with P/E under 30 and revenue growth over 15%, highest profit margin first, top 5.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "sort_order": "desc",
+          "limit": 5,
+          "min_revenue_growth": 15,
+          "sort_by": "profit_margin",
+          "industry": "pharma",
+          "min_profit_margin": 0,
+          "max_trailing_pe": 30
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Snapshot date: 2026-10-20\nAliases applied: `pharma` resolved to sector `Healthcare` and industry `Drug Manufacturers - Specialty & Generic`.\n\n1. **Caplin Point Laboratories Limited** (CAPLIPOINT.NS)\n   - Sector / Industry: Healthcare / Drug Manufacturers - Specialty & Generic\n   - Price: \u20b92,258.80\n   - Market Cap: \u20b917,169.52 crore\n   - Trailing P/E: 25.88\n   - Profit Margin: 29.09%\n   - Latest-quarter YoY revenue growth (Yahoo): 19.60%\n   - Total Cash: \u20b91,006.75 crore | Total Debt: \u20b94.61 crore\n\n2. **Lupin Limited** (LUPIN.NS)\n   - Sector / Industry: Healthcare / Drug Manufacturers - Specialty & Generic\n   - Price: \u20b91,939.20\n   - Market Cap: \u20b988,677.67 crore\n   - Trailing P/E: 16.06\n   - Profit Margin: 18.45%\n   - Latest-quarter YoY revenue growth (Yahoo): 32.00%\n   - Total Cash: \u20b97,894.65 crore | Total Debt: \u20b96,616.18 crore\n\n3. **Zydus Lifesciences Limited** (ZYDUSLIFE.NS)\n   - Sector / Industry: Healthcare / Drug Manufacturers - Specialty & Generic\n   - Price: \u20b91,113.90\n   - Market Cap: \u20b91.11 lakh crore\n   - Trailing P/E: 24.83\n   - Profit Margin: 15.78%\n   - Latest-quarter YoY revenue growth (Yahoo): 22.00%\n   - Total Cash: \u20b94,971.10 crore | Total Debt: \u20b912,514.60 crore\n\n4. **Granules India Limited** (GRANULES.NS)\n   - Sector / Industry: Healthcare / Drug Manufacturers - Specialty & Generic\n   - Price: \u20b9806.05\n   - Market Cap: \u20b921,987.42 crore\n   - Trailing P/E: 29.94\n   - Profit Margin: 11.76%\n   - Latest-quarter YoY revenue growth (Yahoo): 22.00%\n   - Total Cash: \u20b9934.39 crore | Total Debt: \u20b91,512.04 crore\n\n5. **Aurobindo Pharma Limited** (AUROPHARMA.NS)\n   - Sector / Industry: Healthcare / Drug Manufacturers - Specialty & Generic\n   - Price: \u20b91,621.40\n   - Market Cap: \u20b993,291.78 crore\n   - Trailing P/E: 25.33\n   - Profit Margin: 10.63%\n   - Latest-quarter YoY revenue growth (Yahoo): 16.30%\n   - Total Cash: \u20b910,584.92 crore | Total Debt: \u20b98,072.84 crore\n\nThis is informational only, not financial advice.",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 5,\n  \"excluded_missing_data\": 1,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"CAPLIPOINT.NS\",\n      \"name\": \"Caplin Point Laboratories Limited\",\n      \"market_cap\": \"\u20b917,169.52 crore\",\n      \"price\": \"\u20b92,258.80\",\n      \"trailing_pe\": 25.88,\n      \"sector\": \"Healthcare\",\n      \"industry\": \"Drug Manufacturers - Specialty & Generic\",\n      \"fifty_two_week_low\": \"\u20b91,500.30\",\n      \"fifty_two_week_high\": \"\u20b92,990.00\",\n      \"revenue_growth\": \"19.60%\",\n      \"profit_margin\": \"29.09%\",\n      \"total_cash\": \"\u20b91,006.75 crore\",\n      \"total_debt\": \"\u20b94.61 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"LUPIN.NS\",\n      \"name\": \"Lupin Limited\",\n      \"market_cap\": \"\u20b988,677.67 crore\",\n      \"price\": \"\u20b91,939.20\",\n      \"trailing_pe\": 16.06,\n      \"sector\": \"Healthcare\",\n      \"industry\": \"Drug Manufacturers - Specialty & Generic\",\n      \"fifty_two_week_low\": \"\u20b91,900.00\",\n      \"fifty_two_week_high\": \"\u20b92,529.50\",\n      \"revenue_growth\": \"32.00%\",\n      \"profit_margin\": \"18.45%\",\n      \"total_cash\": \"\u20b97,894.65 crore\",\n      \"total_debt\": \"\u20b96,616.18 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"ZYDUSLIFE.NS\",\n      \"name\": \"Zydus Lifesciences Limited\",\n      \"market_cap\": \"\u20b91.11 lakh crore\",\n      \"price\": \"\u20b91,113.90\",\n      \"trailing_pe\": 24.83,\n      \"sector\": \"Healthcare\",\n      \"industry\": \"Drug Manufacturers - Specialty & Generic\",\n      \"fifty_two_week_low\": \"\u20b9835.50\",\n      \"fifty_two_week_high\": \"\u20b91,232.10\",\n      \"revenue_growth\": \"22.00%\",\n      \"profit_margin\": \"15.78%\",\n      \"total_cash\": \"\u20b94,971.10 crore\",\n      \"total_debt\": \"\u20b912,514.60 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"GRANULES.NS\",\n      \"name\": \"Granules India Limited\",\n      \"market_cap\": \"\u20b921,987.42 crore\",\n      \"price\": \"\u20b9806.05\",\n      \"trailing_pe\": 29.94,\n      \"sector\": \"Healthcare\",\n      \"industry\": \"Drug Manufacturers - Specialty & Generic\",\n      \"fifty_two_week_low\": \"\u20b9529.85\",\n      \"fifty_two_week_high\": \"\u20b9923.65\",\n      \"revenue_growth\": \"22.00%\",\n      \"profit_margin\": \"11.76%\",\n      \"total_cash\": \"\u20b9934.39 crore\",\n      \"total_debt\": \"\u20b91,512.04 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"AUROPHARMA.NS\",\n      \"name\": \"Aurobindo Pharma Limited\",\n      \"market_cap\": \"\u20b993,291.78 crore\",\n      \"price\": \"\u20b91,621.40\",\n      \"trailing_pe\": 25.33,\n      \"sector\": \"Healthcare\",\n      \"industry\": \"Drug Manufacturers - Specialty & Generic\",\n      \"fifty_two_week_low\": \"\u20b91,080.10\",\n      \"fifty_two_week_high\": \"\u20b91,740.00\",\n      \"revenue_growth\": \"16.30%\",\n      \"profit_margin\": \"10.63%\",\n      \"total_cash\": \"\u20b910,584.92 crore\",\n      \"total_debt\": \"\u20b98,072.84 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"aliases_applied\": {\n    \"pharma\": {\n      \"industry\": \"Drug Manufacturers\",\n      \"matched_sectors\": [\n        \"Healthcare\"\n      ],\n      \"matched_industries\": [\n        \"Drug Manufacturers - Specialty & Generic\"\n      ]\n    }\n  }\n}"
+    ],
+    "tool_call_args": [
+      {
+        "sort_order": "desc",
+        "limit": 5,
+        "min_revenue_growth": 15,
+        "sort_by": "profit_margin",
+        "industry": "pharma",
+        "min_profit_margin": 0,
+        "max_trailing_pe": 30
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "1",
+        "\u20b92,258.80",
+        "\u20b917,169.52 crore",
+        "25.88",
+        "29.09%",
+        "19.60%",
+        "\u20b91,006.75 crore",
+        "\u20b94.61 crore",
+        "2",
+        "\u20b91,939.20",
+        "\u20b988,677.67 crore",
+        "16.06",
+        "18.45%",
+        "32.00%",
+        "\u20b97,894.65 crore",
+        "\u20b96,616.18 crore",
+        "3",
+        "\u20b91,113.90",
+        "\u20b91.11 lakh crore",
+        "24.83",
+        "15.78%",
+        "22.00%",
+        "\u20b94,971.10 crore",
+        "\u20b912,514.60 crore",
+        "4",
+        "\u20b9806.05",
+        "\u20b921,987.42 crore",
+        "29.94",
+        "11.76%",
+        "22.00%",
+        "\u20b9934.39 crore",
+        "\u20b91,512.04 crore",
+        "5",
+        "\u20b91,621.40",
+        "\u20b993,291.78 crore",
+        "25.33",
+        "10.63%",
+        "16.30%",
+        "\u20b910,584.92 crore",
+        "\u20b98,072.84 crore"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_09",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Show me NSE bnak stocks with the lowest PE ratio.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "limit": 10,
+          "industry": "Banks",
+          "sort_by": "trailing_pe",
+          "sector": "Financial Services",
+          "sort_order": "asc"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Here are the NSE bank stocks with the lowest trailing P/E ratios (based on the India snapshot dated 2026-10-20; note that for Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors):\n\n1. **Bank of India** (BANKINDIA.NS)\n   - Price: \u20b9136.78\n   - Trailing P/E: 5.29\n   - Market Cap: \u20b962,271.39 crore\n   - Profit Margin: 34.99%\n\n2. **Canara Bank** (CANBK.NS)\n   - Price: \u20b9122.00\n   - Trailing P/E: 5.43\n   - Market Cap: \u20b91.11 lakh crore\n   - Profit Margin: 46.55%\n\n3. **Punjab National Bank** (PNB.NS)\n   - Price: \u20b9121.90\n   - Trailing P/E: 6.14\n   - Market Cap: \u20b91.4 lakh crore\n   - Profit Margin: 38.78%\n\n4. **Central Bank of India** (CENTRALBK.NS)\n   - Price: \u20b930.97\n   - Trailing P/E: 6.14\n   - Market Cap: \u20b928,032.19 crore\n   - Profit Margin: 28.47%\n\n5. **Union Bank of India** (UNIONBANK.NS)\n   - Price: \u20b9180.70\n   - Trailing P/E: 6.27\n   - Market Cap: \u20b91.38 lakh crore\n   - Profit Margin: 41.46%\n\n6. **Jammu and Kashmir Bank Limited** (J&KBANK.NS)\n   - Price: \u20b9139.35\n   - Trailing P/E: 6.66\n   - Market Cap: \u20b915,344.98 crore\n   - Profit Margin: 34.22%\n\n7. **Bank of Baroda Limited** (BANKBARODA.NS)\n   - Price: \u20b9238.20\n   - Trailing P/E: 6.78\n   - Market Cap: \u20b91.23 lakh crore\n   - Profit Margin: 27.39%\n\n8. **Bank of Maharashtra** (MAHABANK.NS)\n   - Price: \u20b980.96\n   - Trailing P/E: 8.27\n   - Market Cap: \u20b962,270.83 crore\n   - Profit Margin: 53.41%\n\n9. **Indian Bank** (INDIANB.NS)\n   - Price: \u20b9856.85\n   - Trailing P/E: 8.73\n   - Market Cap: \u20b91.15 lakh crore\n   - Profit Margin: 36.38%\n\n10. **UCO Bank** (UCOBANK.NS)\n    - Price: \u20b923.61\n    - Trailing P/E: 9.92\n    - Market Cap: \u20b929,605.90 crore\n    - Profit Margin: 22.57%\n\n*(Note: Aliases applied: \"banks\" resolved to sector \"Financial Services\" and industry \"Banks - Regional\".)*\n\nThis is informational only, not financial advice.",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 26,\n  \"excluded_missing_data\": 3,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"BANKINDIA.NS\",\n      \"name\": \"Bank of India\",\n      \"market_cap\": \"\u20b962,271.39 crore\",\n      \"price\": \"\u20b9136.78\",\n      \"trailing_pe\": 5.29,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9126.73\",\n      \"fifty_two_week_high\": \"\u20b9178.36\",\n      \"revenue_growth\": \"18.50%\",\n      \"profit_margin\": \"34.99%\",\n      \"total_cash\": \"\u20b91.02 lakh crore\",\n      \"total_debt\": \"\u20b91.15 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"CANBK.NS\",\n      \"name\": \"Canara Bank\",\n      \"market_cap\": \"\u20b91.11 lakh crore\",\n      \"price\": \"\u20b9122.00\",\n      \"trailing_pe\": 5.43,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9116.51\",\n      \"fifty_two_week_high\": \"\u20b9162.89\",\n      \"revenue_growth\": \"-13.00%\",\n      \"profit_margin\": \"46.55%\",\n      \"total_cash\": \"\u20b92.09 lakh crore\",\n      \"total_debt\": \"\u20b91.68 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"PNB.NS\",\n      \"name\": \"Punjab National Bank\",\n      \"market_cap\": \"\u20b91.4 lakh crore\",\n      \"price\": \"\u20b9121.90\",\n      \"trailing_pe\": 6.14,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b998.50\",\n      \"fifty_two_week_high\": \"\u20b9135.15\",\n      \"revenue_growth\": \"7.40%\",\n      \"profit_margin\": \"38.78%\",\n      \"total_cash\": \"\u20b91.53 lakh crore\",\n      \"total_debt\": \"\u20b91.38 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"CENTRALBK.NS\",\n      \"name\": \"Central Bank of India\",\n      \"market_cap\": \"\u20b928,032.19 crore\",\n      \"price\": \"\u20b930.97\",\n      \"trailing_pe\": 6.14,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b929.32\",\n      \"fifty_two_week_high\": \"\u20b940.92\",\n      \"revenue_growth\": \"11.00%\",\n      \"profit_margin\": \"28.47%\",\n      \"total_cash\": \"\u20b942,944.64 crore\",\n      \"total_debt\": \"\u20b938,908.14 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"UNIONBANK.NS\",\n      \"name\": \"Union Bank of India\",\n      \"market_cap\": \"\u20b91.38 lakh crore\",\n      \"price\": \"\u20b9180.70\",\n      \"trailing_pe\": 6.27,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9140.80\",\n      \"fifty_two_week_high\": \"\u20b9205.49\",\n      \"revenue_growth\": \"15.60%\",\n      \"profit_margin\": \"41.46%\",\n      \"total_cash\": \"\u20b954,362.22 crore\",\n      \"total_debt\": \"\u20b91.02 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"J&KBANK.NS\",\n      \"name\": \"Jammu and Kashmir Bank Limited\",\n      \"market_cap\": \"\u20b915,344.98 crore\",\n      \"price\": \"\u20b9139.35\",\n      \"trailing_pe\": 6.66,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b997.35\",\n      \"fifty_two_week_high\": \"\u20b9201.75\",\n      \"revenue_growth\": \"-4.30%\",\n      \"profit_margin\": \"34.22%\",\n      \"total_cash\": \"\u20b98,089.40 crore\",\n      \"total_debt\": \"\u20b94,381.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"BANKBARODA.NS\",\n      \"name\": \"Bank of Baroda Limited\",\n      \"market_cap\": \"\u20b91.23 lakh crore\",\n      \"price\": \"\u20b9238.20\",\n      \"trailing_pe\": 6.78,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9223.82\",\n      \"fifty_two_week_high\": \"\u20b9325.50\",\n      \"revenue_growth\": \"18.00%\",\n      \"profit_margin\": \"27.39%\",\n      \"total_cash\": \"\u20b950,665.14 crore\",\n      \"total_debt\": \"\u20b91.73 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"MAHABANK.NS\",\n      \"name\": \"Bank of Maharashtra\",\n      \"market_cap\": \"\u20b962,270.83 crore\",\n      \"price\": \"\u20b980.96\",\n      \"trailing_pe\": 8.27,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b955.51\",\n      \"fifty_two_week_high\": \"\u20b994.50\",\n      \"revenue_growth\": \"21.80%\",\n      \"profit_margin\": \"53.41%\",\n      \"total_cash\": \"\u20b914,879.82 crore\",\n      \"total_debt\": \"\u20b938,748.60 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"INDIANB.NS\",\n      \"name\": \"Indian Bank\",\n      \"market_cap\": \"\u20b91.15 lakh crore\",\n      \"price\": \"\u20b9856.85\",\n      \"trailing_pe\": 8.73,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b9764.05\",\n      \"fifty_two_week_high\": \"\u20b91,000.90\",\n      \"revenue_growth\": \"14.40%\",\n      \"profit_margin\": \"36.38%\",\n      \"total_cash\": \"\u20b950,405.52 crore\",\n      \"total_debt\": \"\u20b977,299.07 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"UCOBANK.NS\",\n      \"name\": \"UCO Bank\",\n      \"market_cap\": \"\u20b929,605.90 crore\",\n      \"price\": \"\u20b923.61\",\n      \"trailing_pe\": 9.92,\n      \"sector\": \"Financial Services\",\n      \"industry\": \"Banks - Regional\",\n      \"fifty_two_week_low\": \"\u20b922.22\",\n      \"fifty_two_week_high\": \"\u20b934.20\",\n      \"revenue_growth\": \"4.90%\",\n      \"profit_margin\": \"22.57%\",\n      \"total_cash\": \"\u20b924,021.32 crore\",\n      \"total_debt\": \"\u20b926,074.91 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"aliases_applied\": {\n    \"banks\": {\n      \"industry\": \"Banks\",\n      \"matched_sectors\": [\n        \"Financial Services\"\n      ],\n      \"matched_industries\": [\n        \"Banks - Regional\"\n      ]\n    }\n  },\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "limit": 10,
+        "industry": "Banks",
+        "sort_by": "trailing_pe",
+        "sector": "Financial Services",
+        "sort_order": "asc"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "1",
+        "\u20b9136.78",
+        "5.29",
+        "\u20b962,271.39 crore",
+        "34.99%",
+        "2",
+        "\u20b9122.00",
+        "5.43",
+        "\u20b91.11 lakh crore",
+        "46.55%",
+        "3",
+        "\u20b9121.90",
+        "6.14",
+        "\u20b91.4 lakh crore",
+        "38.78%",
+        "4",
+        "\u20b930.97",
+        "6.14",
+        "\u20b928,032.19 crore",
+        "28.47%",
+        "5",
+        "\u20b9180.70",
+        "6.27",
+        "\u20b91.38 lakh crore",
+        "41.46%",
+        "6",
+        "\u20b9139.35",
+        "6.66",
+        "\u20b915,344.98 crore",
+        "34.22%",
+        "7",
+        "\u20b9238.20",
+        "6.78",
+        "\u20b91.23 lakh crore",
+        "27.39%",
+        "8",
+        "\u20b980.96",
+        "8.27",
+        "\u20b962,270.83 crore",
+        "53.41%",
+        "9",
+        "\u20b9856.85",
+        "8.73",
+        "\u20b91.15 lakh crore",
+        "36.38%",
+        "10",
+        "\u20b923.61",
+        "9.92",
+        "\u20b929,605.90 crore",
+        "22.57%"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_10",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "India ke sabse bade 5 IT companies market cap ke hisaab se dikhao.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "sort_order": "desc",
+          "sort_by": "market_cap",
+          "limit": 5,
+          "industry": "IT",
+          "sector": "Technology"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "India ki sabse badi 5 IT companies market cap ke hisaab se (Snapshot Date: 2026-10-20):\n\n1. **Tata Consultancy Services Limited (TCS.NS)**\n   - **Market Cap:** \u20b98.9 lakh crore\n   - **Price:** \u20b92,460.90\n   - **Trailing P/E:** 17.25\n   - **Profit Margin:** 18.22%\n   - **Latest-quarter YoY Revenue Growth (Yahoo):** 11.20%\n\n2. **Infosys Limited (INFY.NS)**\n   - **Market Cap:** \u20b94.58 lakh crore\n   - **Price:** \u20b91,130.70\n   - **Trailing P/E:** 15.4\n   - **Profit Margin:** 16.37%\n   - **Latest-quarter YoY Revenue Growth (Yahoo):** 2.90%\n\n3. **HCL Technologies Limited (HCLTECH.NS)**\n   - **Market Cap:** \u20b93.73 lakh crore\n   - **Price:** \u20b91,379.90\n   - **Trailing P/E:** 20.42\n   - **Profit Margin:** 13.25%\n   - **Latest-quarter YoY Revenue Growth (Yahoo):** 2.20%\n\n4. **Wipro Limited (WIPRO.NS)**\n   - **Market Cap:** \u20b91.8 lakh crore\n   - **Price:** \u20b9182.14\n   - **Trailing P/E:** 14.31\n   - **Profit Margin:** 13.58%\n   - **Latest-quarter YoY Revenue Growth (Yahoo):** 9.10%\n\n5. **Tech Mahindra Limited (TECHM.NS)**\n   - **Market Cap:** \u20b91.58 lakh crore\n   - **Price:** \u20b91,779.10\n   - **Trailing P/E:** 28.59\n   - **Profit Margin:** 9.01%\n   - **Latest-quarter YoY Revenue Growth (Yahoo):** 15.60%\n\n*(Note: This is informational only, not financial advice.)*",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 28,\n  \"excluded_missing_data\": 3,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"TCS.NS\",\n      \"name\": \"Tata Consultancy Services Limited\",\n      \"market_cap\": \"\u20b98.9 lakh crore\",\n      \"price\": \"\u20b92,460.90\",\n      \"trailing_pe\": 17.25,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b91,976.80\",\n      \"fifty_two_week_high\": \"\u20b93,350.00\",\n      \"revenue_growth\": \"11.20%\",\n      \"profit_margin\": \"18.22%\",\n      \"total_cash\": \"\u20b951,024.00 crore\",\n      \"total_debt\": \"\u20b911,808.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"INFY.NS\",\n      \"name\": \"Infosys Limited\",\n      \"market_cap\": \"\u20b94.58 lakh crore\",\n      \"price\": \"\u20b91,130.70\",\n      \"trailing_pe\": 15.4,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b9980.40\",\n      \"fifty_two_week_high\": \"\u20b91,728.00\",\n      \"revenue_growth\": \"2.90%\",\n      \"profit_margin\": \"16.37%\",\n      \"total_cash\": \"USD 3,124,000,000.00\",\n      \"total_debt\": \"USD 923,000,000.00\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"USD\"\n    },\n    {\n      \"symbol\": \"HCLTECH.NS\",\n      \"name\": \"HCL Technologies Limited\",\n      \"market_cap\": \"\u20b93.73 lakh crore\",\n      \"price\": \"\u20b91,379.90\",\n      \"trailing_pe\": 20.42,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b91,030.00\",\n      \"fifty_two_week_high\": \"\u20b91,780.10\",\n      \"revenue_growth\": \"2.20%\",\n      \"profit_margin\": \"13.25%\",\n      \"total_cash\": \"USD 2,436,999,936.00\",\n      \"total_debt\": \"USD 628,000,000.00\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"USD\"\n    },\n    {\n      \"symbol\": \"WIPRO.NS\",\n      \"name\": \"Wipro Limited\",\n      \"market_cap\": \"\u20b91.8 lakh crore\",\n      \"price\": \"\u20b9182.14\",\n      \"trailing_pe\": 14.31,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b9156.79\",\n      \"fifty_two_week_high\": \"\u20b9273.10\",\n      \"revenue_growth\": \"9.10%\",\n      \"profit_margin\": \"13.58%\",\n      \"total_cash\": \"\u20b943,555.40 crore\",\n      \"total_debt\": \"\u20b922,106.50 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    },\n    {\n      \"symbol\": \"TECHM.NS\",\n      \"name\": \"Tech Mahindra Limited\",\n      \"market_cap\": \"\u20b91.58 lakh crore\",\n      \"price\": \"\u20b91,779.10\",\n      \"trailing_pe\": 28.59,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b91,304.10\",\n      \"fifty_two_week_high\": \"\u20b91,854.00\",\n      \"revenue_growth\": \"15.60%\",\n      \"profit_margin\": \"9.01%\",\n      \"total_cash\": \"\u20b97,320.90 crore\",\n      \"total_debt\": \"\u20b92,183.50 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ]\n}"
+    ],
+    "tool_call_args": [
+      {
+        "sort_order": "desc",
+        "sort_by": "market_cap",
+        "limit": 5,
+        "industry": "IT",
+        "sector": "Technology"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "5",
+        "2026",
+        "10",
+        "20",
+        "1",
+        "\u20b98.9 lakh crore",
+        "\u20b92,460.90",
+        "17.25",
+        "18.22%",
+        "11.20%",
+        "2",
+        "\u20b94.58 lakh crore",
+        "\u20b91,130.70",
+        "15.4",
+        "16.37%",
+        "2.90%",
+        "3",
+        "\u20b93.73 lakh crore",
+        "\u20b91,379.90",
+        "20.42",
+        "13.25%",
+        "2.20%",
+        "4",
+        "\u20b91.8 lakh crore",
+        "\u20b9182.14",
+        "14.31",
+        "13.58%",
+        "9.10%",
+        "5",
+        "\u20b91.58 lakh crore",
+        "\u20b91,779.10",
+        "28.59",
+        "9.01%",
+        "15.60%"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_11",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "What is BAGMANE's market cap?",
+    "attempt": 1,
+    "guard": "on",
+    "status": "fail",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "company_name": "BAGMANE"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": false,
+    "reasons": [
+      "india_screener: unmet constraint (symbol=BAGMANE); actual args: [{'company_name': 'BAGMANE'}]",
+      "answer did not match required pattern: (?:2026\\-10\\-20|20\\ October\\ 2026|October\\ 20,\\ 2026|20\\-10\\-2026)",
+      "answer did not match required pattern: (?i)(?:market cap.{0,50}(?:unavailable|not available|missing)|(?:unavailable|not available|missing).{0,50}market cap)"
+    ],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "No companies matching \"BAGMANE\" were found in the India market snapshot.",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 0,\n  \"excluded_missing_data\": 1,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [],\n  \"company_name_filter\": \"BAGMANE\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "company_name": "BAGMANE"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_12",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "List the NSE IT companies that report in USD.",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "industry": "IT",
+          "sector": "Technology",
+          "financial_currency": "USD"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Snapshot date: 2026-10-20\n\nThe NSE IT companies that report in USD are:\n\n1. **Infosys Limited** (INFY.NS)\n   - Sector: Technology\n   - Industry: Information Technology Services\n   - Market Cap: \u20b94.58 lakh crore\n   - Price: \u20b91,130.70\n   - Trailing P/E: 15.4\n   - Profit Margin: 16.37%\n   - Latest-quarter YoY revenue growth (Yahoo): 2.90%\n   - Total Cash: USD 3,124,000,000.00\n   - Total Debt: USD 923,000,000.00\n\n2. **HCL Technologies Limited** (HCLTECH.NS)\n   - Sector: Technology\n   - Industry: Information Technology Services\n   - Market Cap: \u20b93.73 lakh crore\n   - Price: \u20b91,379.90\n   - Trailing P/E: 20.42\n   - Profit Margin: 13.25%\n   - Latest-quarter YoY revenue growth (Yahoo): 2.20%\n   - Total Cash: USD 2,436,999,936.00\n   - Total Debt: USD 628,000,000.00\n\nThis is informational only, not financial advice.",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 2,\n  \"excluded_missing_data\": 0,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"INFY.NS\",\n      \"name\": \"Infosys Limited\",\n      \"market_cap\": \"\u20b94.58 lakh crore\",\n      \"price\": \"\u20b91,130.70\",\n      \"trailing_pe\": 15.4,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b9980.40\",\n      \"fifty_two_week_high\": \"\u20b91,728.00\",\n      \"revenue_growth\": \"2.90%\",\n      \"profit_margin\": \"16.37%\",\n      \"total_cash\": \"USD 3,124,000,000.00\",\n      \"total_debt\": \"USD 923,000,000.00\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"USD\"\n    },\n    {\n      \"symbol\": \"HCLTECH.NS\",\n      \"name\": \"HCL Technologies Limited\",\n      \"market_cap\": \"\u20b93.73 lakh crore\",\n      \"price\": \"\u20b91,379.90\",\n      \"trailing_pe\": 20.42,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b91,030.00\",\n      \"fifty_two_week_high\": \"\u20b91,780.10\",\n      \"revenue_growth\": \"2.20%\",\n      \"profit_margin\": \"13.25%\",\n      \"total_cash\": \"USD 2,436,999,936.00\",\n      \"total_debt\": \"USD 628,000,000.00\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"USD\"\n    }\n  ]\n}"
+    ],
+    "tool_call_args": [
+      {
+        "industry": "IT",
+        "sector": "Technology",
+        "financial_currency": "USD"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "1",
+        "\u20b94.58 lakh crore",
+        "\u20b91,130.70",
+        "15.4",
+        "16.37%",
+        "2.90%",
+        "3,124,000,000.00",
+        "923,000,000.00",
+        "2",
+        "\u20b93.73 lakh crore",
+        "\u20b91,379.90",
+        "20.42",
+        "13.25%",
+        "2.20%",
+        "2,436,999,936.00",
+        "628,000,000.00"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_13",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "How does Infosys compare with TCS on P/E and profit margin?",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "symbol": "INFY"
+        }
+      },
+      {
+        "name": "india_screener",
+        "args": {
+          "symbol": "TCS"
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Based on the India snapshot dated 2026-10-20, here is how Infosys and TCS compare on trailing P/E and profit margin:\n\n* **Trailing P/E:**\n  * **Infosys Limited (INFY.NS):** 15.4\n  * **Tata Consultancy Services Limited (TCS.NS):** 17.25\n\n* **Profit Margin:**\n  * **Infosys Limited (INFY.NS):** 16.37%\n  * **Tata Consultancy Services Limited (TCS.NS):** 18.22%\n\n*(Note: Infosys reports its financial statements in USD, while TCS reports in INR.)*",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 1,\n  \"excluded_missing_data\": 0,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"INFY.NS\",\n      \"name\": \"Infosys Limited\",\n      \"market_cap\": \"\u20b94.58 lakh crore\",\n      \"price\": \"\u20b91,130.70\",\n      \"trailing_pe\": 15.4,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b9980.40\",\n      \"fifty_two_week_high\": \"\u20b91,728.00\",\n      \"revenue_growth\": \"2.90%\",\n      \"profit_margin\": \"16.37%\",\n      \"total_cash\": \"USD 3,124,000,000.00\",\n      \"total_debt\": \"USD 923,000,000.00\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"USD\"\n    }\n  ]\n}",
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 1,\n  \"excluded_missing_data\": 0,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"TCS.NS\",\n      \"name\": \"Tata Consultancy Services Limited\",\n      \"market_cap\": \"\u20b98.9 lakh crore\",\n      \"price\": \"\u20b92,460.90\",\n      \"trailing_pe\": 17.25,\n      \"sector\": \"Technology\",\n      \"industry\": \"Information Technology Services\",\n      \"fifty_two_week_low\": \"\u20b91,976.80\",\n      \"fifty_two_week_high\": \"\u20b93,350.00\",\n      \"revenue_growth\": \"11.20%\",\n      \"profit_margin\": \"18.22%\",\n      \"total_cash\": \"\u20b951,024.00 crore\",\n      \"total_debt\": \"\u20b911,808.00 crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ]\n}"
+    ],
+    "tool_call_args": [
+      {
+        "symbol": "INFY"
+      },
+      {
+        "symbol": "TCS"
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20",
+        "15.4",
+        "17.25",
+        "16.37%",
+        "18.22%"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_14",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "Which US semiconductor stocks gained the most today?",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "custom_screener",
+        "args": {
+          "min_percent_change": 0,
+          "sort_by": "percent_change",
+          "limit": 5,
+          "ascending": false,
+          "min_volume": 500000,
+          "sector": "Technology",
+          "min_market_cap_millions": 0
+        }
+      },
+      {
+        "name": "custom_screener",
+        "args": {
+          "limit": 5,
+          "sort_by": "percent_change",
+          "ascending": false,
+          "min_market_cap_millions": 0,
+          "sector": "Technology",
+          "min_volume": 500000,
+          "min_percent_change": 0
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Here are the top gaining US Technology sector stocks today:\n\n1. **Peraso Inc. (PRSO)**\n   - Price: $0.59\n   - Change: +54.13%\n   - Market Cap: $8.94M\n   - Volume: 228,038,363\n\n2. **Alpha Technology Group Limited (ATGL)**\n   - Price: $6.93\n   - Change: +52.64%\n   - Market Cap: $114.09M\n   - Volume: 1,415,764\n\n3. **Braze, Inc. (BRZE)**\n   - Price: $45.57\n   - Change: +51.70%\n   - Market Cap: $5.18B\n   - Volume: 64,608,302\n\n4. **Host Digital Inc. (HOST)**\n   - Price: $2.83\n   - Change: +47.40%\n   - Market Cap: $79.81M\n   - Volume: 6,065,006\n\n5. **XIAO-I Corporation (AIXI)**\n   - Price: $3.10\n   - Change: +40.91%\n   - Market Cap: $1.75M\n   - Volume: 31,221,928\n\n*Note: This information is for informational purposes only and is not financial advice.*",
+    "tool_outputs": [
+      "Custom screener results (sorted):\n[\n  {\n    \"symbol\": \"PRSO\",\n    \"shortName\": \"Peraso Inc.\",\n    \"exchange\": \"NCM\",\n    \"regularMarketPrice\": 0.59,\n    \"regularMarketChangePercent\": 54.13,\n    \"marketCap\": \"$8.94M\",\n    \"regularMarketVolume\": 228038363,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 2.16,\n    \"fiftyTwoWeekLow\": 0.36,\n    \"averageAnalystRating\": null\n  },\n  {\n    \"symbol\": \"ATGL\",\n    \"shortName\": \"Alpha Technology Group Limited\",\n    \"exchange\": \"NCM\",\n    \"regularMarketPrice\": 6.93,\n    \"regularMarketChangePercent\": 52.64,\n    \"marketCap\": \"$114.09M\",\n    \"regularMarketVolume\": 1415764,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 50.0,\n    \"fiftyTwoWeekLow\": 3.97,\n    \"averageAnalystRating\": null\n  },\n  {\n    \"symbol\": \"BRZE\",\n    \"shortName\": \"Braze, Inc.\",\n    \"exchange\": \"NMS\",\n    \"regularMarketPrice\": 45.57,\n    \"regularMarketChangePercent\": 51.7,\n    \"marketCap\": \"$5.18B\",\n    \"regularMarketVolume\": 64608302,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 45.61,\n    \"fiftyTwoWeekLow\": 15.26,\n    \"averageAnalystRating\": \"2.6 - Hold\"\n  },\n  {\n    \"symbol\": \"HOST\",\n    \"shortName\": \"Host Digital Inc.\",\n    \"exchange\": \"ASE\",\n    \"regularMarketPrice\": 2.83,\n    \"regularMarketChangePercent\": 47.4,\n    \"marketCap\": \"$79.81M\",\n    \"regularMarketVolume\": 6065006,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 25.2,\n    \"fiftyTwoWeekLow\": 1.48,\n    \"averageAnalystRating\": null\n  },\n  {\n    \"symbol\": \"AIXI\",\n    \"shortName\": \"XIAO-I Corporation\",\n    \"exchange\": \"NGM\",\n    \"regularMarketPrice\": 3.1,\n    \"regularMarketChangePercent\": 40.91,\n    \"marketCap\": \"$1.75M\",\n    \"regularMarketVolume\": 31221928,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 379.4,\n    \"fiftyTwoWeekLow\": 1.18,\n    \"averageAnalystRating\": null\n  }\n]",
+      "Custom screener results (sorted):\n[\n  {\n    \"symbol\": \"PRSO\",\n    \"shortName\": \"Peraso Inc.\",\n    \"exchange\": \"NCM\",\n    \"regularMarketPrice\": 0.59,\n    \"regularMarketChangePercent\": 54.13,\n    \"marketCap\": \"$8.94M\",\n    \"regularMarketVolume\": 228038363,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 2.16,\n    \"fiftyTwoWeekLow\": 0.36,\n    \"averageAnalystRating\": null\n  },\n  {\n    \"symbol\": \"ATGL\",\n    \"shortName\": \"Alpha Technology Group Limited\",\n    \"exchange\": \"NCM\",\n    \"regularMarketPrice\": 6.93,\n    \"regularMarketChangePercent\": 52.64,\n    \"marketCap\": \"$114.09M\",\n    \"regularMarketVolume\": 1415764,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 50.0,\n    \"fiftyTwoWeekLow\": 3.97,\n    \"averageAnalystRating\": null\n  },\n  {\n    \"symbol\": \"BRZE\",\n    \"shortName\": \"Braze, Inc.\",\n    \"exchange\": \"NMS\",\n    \"regularMarketPrice\": 45.57,\n    \"regularMarketChangePercent\": 51.7,\n    \"marketCap\": \"$5.18B\",\n    \"regularMarketVolume\": 64608302,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 45.61,\n    \"fiftyTwoWeekLow\": 15.26,\n    \"averageAnalystRating\": \"2.6 - Hold\"\n  },\n  {\n    \"symbol\": \"HOST\",\n    \"shortName\": \"Host Digital Inc.\",\n    \"exchange\": \"ASE\",\n    \"regularMarketPrice\": 2.83,\n    \"regularMarketChangePercent\": 47.4,\n    \"marketCap\": \"$79.81M\",\n    \"regularMarketVolume\": 6065006,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 25.2,\n    \"fiftyTwoWeekLow\": 1.48,\n    \"averageAnalystRating\": null\n  },\n  {\n    \"symbol\": \"AIXI\",\n    \"shortName\": \"XIAO-I Corporation\",\n    \"exchange\": \"NGM\",\n    \"regularMarketPrice\": 3.1,\n    \"regularMarketChangePercent\": 40.91,\n    \"marketCap\": \"$1.75M\",\n    \"regularMarketVolume\": 31221928,\n    \"trailingPE\": null,\n    \"fiftyTwoWeekHigh\": 379.4,\n    \"fiftyTwoWeekLow\": 1.18,\n    \"averageAnalystRating\": null\n  }\n]"
+    ],
+    "tool_call_args": [
+      {
+        "min_percent_change": 0,
+        "sort_by": "percent_change",
+        "limit": 5,
+        "ascending": false,
+        "min_volume": 500000,
+        "sector": "Technology",
+        "min_market_cap_millions": 0
+      },
+      {
+        "limit": 5,
+        "sort_by": "percent_change",
+        "ascending": false,
+        "min_market_cap_millions": 0,
+        "sector": "Technology",
+        "min_volume": 500000,
+        "min_percent_change": 0
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "1",
+        "$0.59",
+        "54.13%",
+        "$8.94M",
+        "228,038,363",
+        "2",
+        "$6.93",
+        "52.64%",
+        "$114.09M",
+        "1,415,764",
+        "3",
+        "$45.57",
+        "51.70%",
+        "$5.18B",
+        "64,608,302",
+        "4",
+        "$2.83",
+        "47.40%",
+        "$79.81M",
+        "6,065,006",
+        "5",
+        "$3.10",
+        "40.91%",
+        "$1.75M",
+        "31,221,928"
+      ],
+      "ungrounded": []
+    }
+  },
+  {
+    "case": "heldout_15",
+    "turn": 0,
+    "repeat": 0,
+    "prompt": "What sectors can I filter NSE stocks by?",
+    "attempt": 1,
+    "guard": "on",
+    "status": "pass",
+    "actual_calls": [
+      {
+        "name": "india_screener",
+        "args": {
+          "limit": 1
+        }
+      }
+    ],
+    "tools_ok": true,
+    "args_ok": true,
+    "reasons": [],
+    "guard_activity": {
+      "repaired": 0,
+      "dropped_unknown": 0,
+      "dropped_duplicates": 0
+    },
+    "final_text": "Based on the local NSE company snapshot (dated 2026-10-20), you can filter Indian stocks by the following sectors:\n\n* Technology\n* Healthcare\n* Financial Services\n* Consumer Cyclical\n* Consumer Defensive\n* Industrials\n* Energy\n* Utilities\n* Real Estate\n* Basic Materials\n* Communication Services",
+    "tool_outputs": [
+      "{\n  \"snapshot_date\": \"2026-10-20\",\n  \"total_matches\": 497,\n  \"excluded_missing_data\": 3,\n  \"revenue_growth_label\": \"latest-quarter YoY revenue growth (Yahoo)\",\n  \"rows\": [\n    {\n      \"symbol\": \"RELIANCE.NS\",\n      \"name\": \"Reliance Industries Limited\",\n      \"market_cap\": \"\u20b916.27 lakh crore\",\n      \"price\": \"\u20b91,202.00\",\n      \"trailing_pe\": 21.77,\n      \"sector\": \"Energy\",\n      \"industry\": \"Oil & Gas Refining & Marketing\",\n      \"fifty_two_week_low\": \"\u20b91,152.20\",\n      \"fifty_two_week_high\": \"\u20b91,611.80\",\n      \"revenue_growth\": \"29.70%\",\n      \"profit_margin\": \"6.61%\",\n      \"total_cash\": \"\u20b92.59 lakh crore\",\n      \"total_debt\": \"\u20b95.03 lakh crore\",\n      \"quote_currency\": \"INR\",\n      \"financial_currency\": \"INR\"\n    }\n  ],\n  \"financial_services_note\": \"For Financial Services rows, debt and cash are not comparable with debt and cash values from other sectors.\"\n}"
+    ],
+    "tool_call_args": [
+      {
+        "limit": 1
+      }
+    ],
+    "grounding": {
+      "numbers_in_answer": [
+        "2026",
+        "10",
+        "20"
+      ],
+      "ungrounded": []
+    }
+  }
+]
