@@ -1,18 +1,32 @@
 """Helpers for reading and formatting the India fundamentals snapshot."""
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
 
-DEFAULT_SNAPSHOT_PATH = Path("data/india_snapshot.json")
+DEFAULT_SNAPSHOT_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "india_snapshot.json"
+)
 RUPEES_PER_CRORE = 10_000_000
 RUPEES_PER_LAKH_CRORE = 1_000_000_000_000
 
 
-def load_snapshot(path=DEFAULT_SNAPSHOT_PATH):
+def resolve_snapshot_path():
+    """Resolve the snapshot override, repository path, or cwd fallback."""
+    override = os.environ.get("INDIA_SNAPSHOT_PATH")
+    if override:
+        return Path(override)
+    if DEFAULT_SNAPSHOT_PATH.exists():
+        return DEFAULT_SNAPSHOT_PATH
+    return Path("data/india_snapshot.json")
+
+
+def load_snapshot(path=None):
     """Load a snapshot with skipped tickers marked unavailable."""
-    with Path(path).open(encoding="utf-8") as snapshot_file:
+    snapshot_path = resolve_snapshot_path() if path is None else Path(path)
+    with snapshot_path.open(encoding="utf-8") as snapshot_file:
         snapshot = json.load(snapshot_file)
     tickers = snapshot.get("tickers", {})
     skipped_symbols = [

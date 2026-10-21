@@ -2,13 +2,19 @@ import importlib.util
 import io
 import json
 import logging
+import os
 import tempfile
 import unittest
 from contextlib import redirect_stderr
 from pathlib import Path
 from unittest.mock import patch
 
-from stock_screener.india_data import format_money, get_snapshot_date, load_snapshot
+from stock_screener.india_data import (
+    DEFAULT_SNAPSHOT_PATH,
+    format_money,
+    get_snapshot_date,
+    load_snapshot,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +26,61 @@ SPEC.loader.exec_module(refresh_india)
 
 
 class TestIndiaData(unittest.TestCase):
+    def test_default_snapshot_loads_after_changing_working_directory(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"INDIA_SNAPSHOT_PATH": ""}
+        ):
+            original_cwd = Path.cwd()
+            try:
+                os.chdir(directory)
+                snapshot = load_snapshot()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertTrue(DEFAULT_SNAPSHOT_PATH.is_absolute())
+        self.assertGreater(len(snapshot["tickers"]), 0)
+
+    def test_india_snapshot_path_environment_override(self):
+        fixture = {
+            "snapshot_date": "override-date",
+            "tickers": {"OVERRIDE.NS": {"status": "ok"}},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "custom_snapshot.json"
+            path.write_text(json.dumps(fixture), encoding="utf-8")
+            with patch.dict(os.environ, {"INDIA_SNAPSHOT_PATH": str(path)}):
+                snapshot = load_snapshot()
+
+        self.assertEqual(snapshot["snapshot_date"], "override-date")
+        self.assertEqual(list(snapshot["tickers"]), ["OVERRIDE.NS"])
+
+    def test_default_snapshot_falls_back_to_working_directory_when_repo_file_missing(self):
+        fixture = {
+            "snapshot_date": "cwd-fallback",
+            "tickers": {"FALLBACK.NS": {"status": "ok"}},
+        }
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"INDIA_SNAPSHOT_PATH": ""}
+        ):
+            data_dir = Path(directory) / "data"
+            data_dir.mkdir()
+            (data_dir / "india_snapshot.json").write_text(
+                json.dumps(fixture), encoding="utf-8"
+            )
+            original_cwd = Path.cwd()
+            try:
+                os.chdir(directory)
+                with patch(
+                    "stock_screener.india_data.DEFAULT_SNAPSHOT_PATH",
+                    Path(directory) / "missing-repo-snapshot.json",
+                ):
+                    snapshot = load_snapshot()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(snapshot["snapshot_date"], "cwd-fallback")
+        self.assertIn("FALLBACK.NS", snapshot["tickers"])
+
     def test_write_snapshot_retries_permission_error(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "snapshot.json"
