@@ -12,9 +12,10 @@ from pathlib import Path
 
 import yfinance as yf
 
+from stock_screener.india_data import resolve_snapshot_path
 
 DATA_DIR = Path("data")
-OUTPUT_PATH = DATA_DIR / "india_snapshot.json"
+OUTPUT_PATH = resolve_snapshot_path()
 RETRIES = 3
 INITIAL_BACKOFF_SECONDS = 1
 REQUEST_DELAY_SECONDS = 0.5
