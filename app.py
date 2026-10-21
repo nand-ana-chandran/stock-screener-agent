@@ -1,8 +1,21 @@
 import uuid
 import streamlit as st
-from stock_screener.flow import graph
+from stock_screener.india_data import load_snapshot
 
 st.set_page_config(page_title="Stock Screener Agent", page_icon="📈")
+
+try:
+    load_snapshot()
+except (OSError, ValueError, TypeError, AttributeError) as exc:
+    st.warning(
+        "India data is unavailable because the stock snapshot could not be loaded. "
+        "US stock tools are still available. Ensure the snapshot exists and contains "
+        "valid JSON, or set INDIA_SNAPSHOT_PATH to its location. "
+        f"Details: {exc}"
+    )
+
+from stock_screener.flow import graph
+
 st.title("📈 Stock Screener Agent")
 st.caption("Data from Yahoo Finance. Informational only, not financial advice.")
 st.caption(

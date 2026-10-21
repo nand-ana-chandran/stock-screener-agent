@@ -627,8 +627,11 @@ def india_screener(
 
     try:
         snapshot = load_snapshot()
-    except FileNotFoundError:
-        return "India snapshot is unavailable. Build it with scripts/refresh_india.py."
+    except (OSError, ValueError, TypeError, AttributeError):
+        return (
+            "India data unavailable: the India snapshot could not be loaded. "
+            "Build or restore it with scripts/refresh_india.py."
+        )
     tickers = snapshot.get("tickers", {})
     requested_filters = {
         "market_cap": (

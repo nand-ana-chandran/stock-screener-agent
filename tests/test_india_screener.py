@@ -261,6 +261,16 @@ class TestIndiaScreener(unittest.TestCase):
         self.assertEqual(result["total_matches"], 0)
         self.assertEqual(result["rows"], [])
 
+    def test_unavailable_snapshot_returns_clear_message(self):
+        with patch(
+            "stock_screener.tool.load_snapshot",
+            side_effect=FileNotFoundError("missing snapshot"),
+        ):
+            result = india_screener.invoke({})
+
+        self.assertIn("India data unavailable", result)
+        self.assertIn("scripts/refresh_india.py", result)
+
     def test_sector_industry_aliases_and_cash_debt_sorts(self):
         it_services = {
             **SNAPSHOT["tickers"]["AAA.NS"],
